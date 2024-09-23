@@ -19,12 +19,10 @@ type Encrypor interface {
 type RSAEncryptor struct {
 	PrivateKey *rsa.PrivateKey
 	PublicKey  *rsa.PublicKey
-	size       int
 }
 
 type AESEncryptor struct {
-	Key  []byte
-	size int
+	Key []byte
 }
 
 func (r *RSAEncryptor) GenerateKey(size int) error {
@@ -37,15 +35,12 @@ func (r *RSAEncryptor) GenerateKey(size int) error {
 
 	r.PrivateKey = privKey
 	r.PublicKey = &privKey.PublicKey
-	r.size = size
 
 	return nil
 }
 
 func (a *AESEncryptor) GenerateKey(size int) error {
 	a.Key = make([]byte, size)
-	a.size = size
-
 	return nil
 }
 
