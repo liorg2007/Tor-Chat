@@ -72,3 +72,29 @@ func (a *AESEncryptor) Encrypt(text []byte) ([]byte, error) {
 
 	return ciphertext, nil
 }
+
+func (r *RSAEncryptor) Decrypt(ciphertext []byte) ([]byte, error) {
+	hash := sha256.New()
+	text, err := rsa.DecryptOAEP(hash, rand.Reader, r.PrivateKey, ciphertext, nil)
+
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+
+	return text, nil
+}
+
+func (a *AESEncryptor) Decrypt(ciphertext []byte) ([]byte, error) {
+	aes, err := aes.NewCipher(a.Key)
+
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+
+	plaintext := make([]byte, len(ciphertext))
+	aes.Decrypt(plaintext, ciphertext)
+
+	return plaintext, nil
+}
