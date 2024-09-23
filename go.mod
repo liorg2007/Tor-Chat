@@ -1,3 +1,3 @@
-module github.com/liorg2007/Tor-Chat
+module MarshmelloSpace
 
 go 1.23.1
