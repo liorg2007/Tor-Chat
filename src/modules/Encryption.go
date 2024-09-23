@@ -1,8 +1,10 @@
 package Encryption
 
 import (
+	"crypto/aes"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"log"
 )
 
@@ -43,4 +45,30 @@ func (a *AESEncryptor) GenerateKey(size int) error {
 	a.size = size
 
 	return nil
+}
+
+func (r *RSAEncryptor) Encrypt(text []byte) ([]byte, error) {
+	hash := sha256.New()
+	ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, r.PublicKey, text, nil)
+
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+
+	return ciphertext, nil
+}
+
+func (a *AESEncryptor) Encrypt(text []byte) ([]byte, error) {
+	aes, err := aes.NewCipher(a.Key)
+
+	if err != nil {
+		log.Panic(err)
+		return nil, err
+	}
+
+	ciphertext := make([]byte, len(text))
+	aes.Encrypt(ciphertext, text)
+
+	return ciphertext, nil
 }
