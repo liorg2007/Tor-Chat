@@ -1,12 +1,12 @@
 package main
 
 import (
-	Encryption "MarshmelloSpace/modules"
 	"fmt"
+	"marshmello/utils/encryption"
 )
 
 func main() {
-	var enc Encryption.AESEncryptor
+	var enc encryption.AESEncryptor
 	enc.GenerateKey(32)
 
 	msg := "Hello world"
