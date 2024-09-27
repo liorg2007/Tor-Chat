@@ -2,9 +2,10 @@ package packet
 
 const (
 	GetAES   = 100 // Create a new circuit
-	Destroy  = 101
-	Redirect = 102 // Custom: Redirect to another server
-	Receive  = 103 // Custom: Receive data
+	Redirect = 101
+	Receive  = 102 // Custom: Redirect to another server
+	Destroy  = 103 // Custom: Receive data
+	Ack      = 104
 )
 
 type RawMessage struct {
@@ -15,4 +16,24 @@ type RawMessage struct {
 type EncryptedMessage struct {
 	length        int
 	encryptedData string // in base64
+}
+
+func SerializeGetAES(aesKey string) RawMessage {
+
+}
+
+func SerialzieRedirect(message EncryptedMessage, addr string) RawMessage {
+
+}
+
+func SerializeReceive(message string) RawMessage {
+
+}
+
+func SerializeDestroy() RawMessage {
+
+}
+
+func SerializeAck() RawMessage {
+
 }
