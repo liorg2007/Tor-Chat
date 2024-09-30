@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"marshmello/pkg/encryption"
+	"marshmello/encryption"
 )
 
 func main() {

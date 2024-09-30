@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"marshmello/pkg/helper"
 )
 
 const AES_KEY_LENGTH int = 256
@@ -33,7 +34,7 @@ func SerializeGetAES(aesKey []byte) (RawMessage, error) {
 }
 
 func SerialzieRedirect(encryptedData string, addr string) (RawMessage, error) {
-	if utils.isBase64Encoded(encryptedData) {
+	if helper.IsBase64Encoded(encryptedData) {
 		return RawMessage{}, errors.New("encrypted data is not base64")
 	}
 
