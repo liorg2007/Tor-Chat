@@ -32,8 +32,20 @@ func SerializeGetAES(aesKey []byte) (RawMessage, error) {
 	return RawMessage{GetAES, string(b)}, nil
 }
 
-func SerialzieRedirect(message EncryptedMessage, addr string) (RawMessage, error) {
+func SerialzieRedirect(encryptedData string, addr string) (RawMessage, error) {
+	if utils.isBase64Encoded(encryptedData) {
+		return RawMessage{}, errors.New("encrypted data is not base64")
+	}
 
+	m := RedirectMsg{Addr: addr, RedirectedMessage: encryptedData}
+
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		return RawMessage{}, err
+	}
+
+	return RawMessage{Redirect, string(b)}, nil
 }
 
 func SerializeReceive(message string) (RawMessage, error) {

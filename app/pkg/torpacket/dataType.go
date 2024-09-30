@@ -5,10 +5,11 @@ type RawMessage struct {
 	jsonData string
 }
 
-type EncryptedMessage struct {
-	encryptedData string // in base64
-}
-
 type GetAesMsg struct {
 	AesKey string
+}
+
+type RedirectMsg struct {
+	Addr              string
+	RedirectedMessage string
 }
