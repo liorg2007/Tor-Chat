@@ -49,7 +49,15 @@ func SerialzieRedirect(encryptedData string, addr string) (RawMessage, error) {
 }
 
 func SerializeReceive(message string) (RawMessage, error) {
+	m := ReceiveMsg{message}
 
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		return RawMessage{}, err
+	}
+
+	return RawMessage{Receive, string(b)}, nil
 }
 
 func SerializeDestroy() (RawMessage, error) {

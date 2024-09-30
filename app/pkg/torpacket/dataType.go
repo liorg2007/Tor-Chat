@@ -13,3 +13,7 @@ type RedirectMsg struct {
 	Addr              string
 	RedirectedMessage string
 }
+
+type ReceiveMsg struct {
+	Message string
+}
