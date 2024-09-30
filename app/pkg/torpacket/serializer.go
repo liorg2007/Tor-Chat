@@ -61,9 +61,17 @@ func SerializeReceive(message string) (RawMessage, error) {
 }
 
 func SerializeDestroy() (RawMessage, error) {
-
+	return RawMessage{Destroy, ""}, nil
 }
 
-func SerializeAck() (RawMessage, error) {
+func SerializeAck(errorMessage string) (RawMessage, error) {
+	m := AckMsg{errorMessage}
 
+	b, err := json.Marshal(m)
+
+	if err != nil {
+		return RawMessage{}, err
+	}
+
+	return RawMessage{Destroy, string(b)}, nil
 }

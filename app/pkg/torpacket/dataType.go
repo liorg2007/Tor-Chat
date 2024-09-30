@@ -17,3 +17,7 @@ type RedirectMsg struct {
 type ReceiveMsg struct {
 	Message string
 }
+
+type AckMsg struct {
+	Message string
+}
