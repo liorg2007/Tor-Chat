@@ -1,8 +1,8 @@
 package torpacket
 
 type RawMessage struct {
-	code     int
-	jsonData string
+	Code     int
+	JsonData string
 }
 
 type GetAesMsg struct {

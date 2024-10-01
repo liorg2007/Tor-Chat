@@ -41,6 +41,10 @@ func (r *RSAEncryptor) GenerateKey(size int) error {
 
 func (a *AESEncryptor) GenerateKey(size int) error {
 	a.Key = make([]byte, size)
+	_, err := rand.Read(a.Key)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

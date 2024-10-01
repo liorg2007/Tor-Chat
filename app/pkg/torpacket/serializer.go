@@ -7,16 +7,27 @@ import (
 	"marshmello/pkg/helper"
 )
 
-const AES_KEY_LENGTH int = 256
+const AES_KEY_LENGTH int = 32 // 256 bits = 32 bytes
 
+// Message type codes used in the Tor-like protocol.
 const (
-	GetAES   = 100 // Create a new circuit
-	Redirect = 101
-	Receive  = 102 // Custom: Redirect to another server
-	Destroy  = 103 // Custom: Receive data
-	Ack      = 104
+	GetAES   = 100 // Request an AES key from the node.
+	Redirect = 101 // Redirect an encrypted message to another node.
+	Receive  = 102 // Receive and process a message from another node.
+	Destroy  = 103 // Destroy the circuit or session.
+	Ack      = 104 // Acknowledge the reception of a message.
 )
 
+// SerializeGetAES serializes a message containing an AES key.
+// The AES key is base64 encoded before being included in the message.
+// It returns a RawMessage with the serialized data or an error if the key length is invalid.
+//
+// Parameters:
+//   - aesKey: A byte slice representing the AES key (must be 32 bytes).
+//
+// Returns:
+//   - RawMessage: The serialized message containing the AES key.
+//   - error: Error if the AES key length is not exactly 32 bytes.
 func SerializeGetAES(aesKey []byte) (RawMessage, error) {
 	if len(aesKey) != AES_KEY_LENGTH {
 		return RawMessage{}, errors.New("Aes Key is not in desired length")
@@ -33,9 +44,19 @@ func SerializeGetAES(aesKey []byte) (RawMessage, error) {
 	return RawMessage{GetAES, string(b)}, nil
 }
 
+// SerialzieRedirect serializes a message to redirect traffic to another node.
+// The encrypted message should be base64 encoded and will be sent to the provided address.
+//
+// Parameters:
+//   - encryptedData: A base64-encoded string representing the encrypted data to be redirected.
+//   - addr: A string representing the address to which the message should be redirected.
+//
+// Returns:
+//   - RawMessage: The serialized redirect message.
+//   - error: Error if the encrypted data is not base64 encoded.
 func SerialzieRedirect(encryptedData string, addr string) (RawMessage, error) {
-	if helper.IsBase64Encoded(encryptedData) {
-		return RawMessage{}, errors.New("encrypted data is not base64")
+	if !helper.IsBase64Encoded(encryptedData) {
+		return RawMessage{}, errors.New("encrypted data is not base64 encoded")
 	}
 
 	m := RedirectMsg{Addr: addr, RedirectedMessage: encryptedData}
@@ -49,6 +70,15 @@ func SerialzieRedirect(encryptedData string, addr string) (RawMessage, error) {
 	return RawMessage{Redirect, string(b)}, nil
 }
 
+// SerializeReceive serializes a message to be sent to a node.
+// This message contains arbitrary data that will be processed by the receiver.
+//
+// Parameters:
+//   - message: A string representing the message to be sent.
+//
+// Returns:
+//   - RawMessage: The serialized message for receiving data.
+//   - error: Error if the message could not be serialized.
 func SerializeReceive(message string) (RawMessage, error) {
 	m := ReceiveMsg{message}
 
@@ -61,10 +91,24 @@ func SerializeReceive(message string) (RawMessage, error) {
 	return RawMessage{Receive, string(b)}, nil
 }
 
-func SerializeDestroy() (RawMessage, error) {
-	return RawMessage{Destroy, ""}, nil
+// SerializeDestroy serializes a message indicating that the circuit or session should be destroyed.
+// This message typically signals the end of communication between nodes.
+//
+// Returns:
+//   - RawMessage: The serialized destroy message (no payload).
+func SerializeDestroy() RawMessage {
+	return RawMessage{Destroy, ""}
 }
 
+// SerializeAck serializes an acknowledgment message to confirm the receipt of data.
+// This message is often used to notify the sender that a message has been successfully received and processed.
+//
+// Parameters:
+//   - errorMessage: A string representing the acknowledgment message or error to be returned.
+//
+// Returns:
+//   - RawMessage: The serialized acknowledgment message.
+//   - error: Error if the message could not be serialized.
 func SerializeAck(errorMessage string) (RawMessage, error) {
 	m := AckMsg{errorMessage}
 
@@ -74,5 +118,5 @@ func SerializeAck(errorMessage string) (RawMessage, error) {
 		return RawMessage{}, err
 	}
 
-	return RawMessage{Destroy, string(b)}, nil
+	return RawMessage{Ack, string(b)}, nil
 }
