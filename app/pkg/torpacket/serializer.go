@@ -9,15 +9,6 @@ import (
 
 const AES_KEY_LENGTH int = 32 // 256 bits = 32 bytes
 
-// Message type codes used in the Tor-like protocol.
-const (
-	GetAES   = 100 // Request an AES key from the node.
-	Redirect = 101 // Redirect an encrypted message to another node.
-	Receive  = 102 // Receive and process a message from another node.
-	Destroy  = 103 // Destroy the circuit or session.
-	Ack      = 104 // Acknowledge the reception of a message.
-)
-
 // SerializeGetAES serializes a message containing an AES key.
 // The AES key is base64 encoded before being included in the message.
 // It returns a RawMessage with the serialized data or an error if the key length is invalid.
@@ -30,7 +21,7 @@ const (
 //   - error: Error if the AES key length is not exactly 32 bytes.
 func SerializeGetAES(aesKey []byte) (RawMessage, error) {
 	if len(aesKey) != AES_KEY_LENGTH {
-		return RawMessage{}, errors.New("Aes Key is not in desired length")
+		return RawMessage{}, errors.New("aes Key is not in desired length")
 	}
 
 	m := GetAesMsg{AesKey: base64.StdEncoding.EncodeToString(aesKey)}
