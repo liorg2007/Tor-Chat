@@ -29,8 +29,10 @@ func SendData(conn net.Conn, base64data string) error {
 	}
 
 	// Write the actual data
-	if _, err := conn.Write(data); err != nil {
-		return err
+	if length > 0 {
+		if _, err := conn.Write(data); err != nil {
+			return err
+		}
 	}
 
 	return nil
