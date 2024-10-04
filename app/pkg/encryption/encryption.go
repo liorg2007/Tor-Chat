@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"io"
-	"log"
 )
 
 type Encrypor interface {
@@ -29,7 +28,6 @@ func (r *RSAEncryptor) GenerateKey(size int) error {
 	privKey, err := rsa.GenerateKey(rand.Reader, size)
 
 	if err != nil {
-		log.Panic(err)
 		return err
 	}
 
@@ -53,7 +51,6 @@ func (r *RSAEncryptor) Encrypt(text []byte) ([]byte, error) {
 	ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, r.PublicKey, text, nil)
 
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
@@ -63,20 +60,17 @@ func (r *RSAEncryptor) Encrypt(text []byte) ([]byte, error) {
 func (a *AESEncryptor) Encrypt(text []byte) ([]byte, error) {
 	block, err := aes.NewCipher(a.Key)
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
 
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		log.Panic("error generating the nonce ", err)
 		return nil, err
 	}
 
@@ -90,7 +84,6 @@ func (r *RSAEncryptor) Decrypt(ciphertext []byte) ([]byte, error) {
 	text, err := rsa.DecryptOAEP(hash, rand.Reader, r.PrivateKey, ciphertext, nil)
 
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
@@ -100,19 +93,16 @@ func (r *RSAEncryptor) Decrypt(ciphertext []byte) ([]byte, error) {
 func (a *AESEncryptor) Decrypt(ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(a.Key)
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
 	decryptedData, err := gcm.Open(nil, ciphertext[:gcm.NonceSize()], ciphertext[gcm.NonceSize():], nil)
 	if err != nil {
-		log.Panic(err)
 		return nil, err
 	}
 
