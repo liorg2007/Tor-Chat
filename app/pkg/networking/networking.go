@@ -8,6 +8,8 @@ import (
 	"net"
 )
 
+const CONN_PORT = "6942"
+
 func SendData(conn net.Conn, base64data string) error {
 	if !helper.IsBase64Encoded(base64data) {
 		return errors.New("data is not base64 encoded")
@@ -61,4 +63,14 @@ func ReceiveData(conn net.Conn) (string, error) {
 	}
 
 	return base64data, nil
+}
+
+func CreateListening(port string) (net.Listener, error) {
+	listener, err := net.Listen("tcp", ":"+port)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return listener, nil
 }
