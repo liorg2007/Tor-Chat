@@ -1,11 +1,12 @@
-package torpacket
+package handlers
 
 type GetAesRequest struct {
 	RsaKey string
 }
 
 type GetAesResponse struct {
-	AesKey string
+	session string
+	aes_key string
 }
 
 type SetRedirectRequest struct {
