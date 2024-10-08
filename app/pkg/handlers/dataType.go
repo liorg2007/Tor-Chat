@@ -5,8 +5,8 @@ type GetAesRequest struct {
 }
 
 type GetAesResponse struct {
-	session string
-	aes_key string
+	Session string
+	Aes_key string
 }
 
 type SetRedirectRequest struct {

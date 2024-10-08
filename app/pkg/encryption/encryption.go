@@ -9,10 +9,15 @@ import (
 	"io"
 )
 
+const (
+	AES_KEY_SIZE = 128
+	RSA_KEY_SIZE = 2048
+)
+
 type Encrypor interface {
 	Encrypt(text []byte) ([]byte, error)
 	Decrypt(ciphertext []byte) ([]byte, error)
-	GenerateKey(size int) error
+	GenerateKey() error
 }
 
 type RSAEncryptor struct {
@@ -24,8 +29,8 @@ type AESEncryptor struct {
 	Key []byte
 }
 
-func (r *RSAEncryptor) GenerateKey(size int) error {
-	privKey, err := rsa.GenerateKey(rand.Reader, size)
+func (r *RSAEncryptor) GenerateKey() error {
+	privKey, err := rsa.GenerateKey(rand.Reader, RSA_KEY_SIZE)
 
 	if err != nil {
 		return err
@@ -37,8 +42,8 @@ func (r *RSAEncryptor) GenerateKey(size int) error {
 	return nil
 }
 
-func (a *AESEncryptor) GenerateKey(size int) error {
-	a.Key = make([]byte, size)
+func (a *AESEncryptor) GenerateKey() error {
+	a.Key = make([]byte, AES_KEY_SIZE)
 	_, err := rand.Read(a.Key)
 	if err != nil {
 		return err

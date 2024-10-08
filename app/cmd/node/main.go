@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"marshmello/pkg/session"
 	"net"
 	"net/http"
 	"os"
@@ -11,15 +12,19 @@ import (
 	"sync"
 )
 
+const REDIS_ADDR = "addr"
+
+var sm session.SessionManager
+
 // Router function to redirect paths to their corresponding handlers
 func router(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/get-aes":
-		//GetAesHandler(w, r)
+		//GetAesHandler(w, r, sm)
 	case "/set-redirect":
-		//SetRedirectHandler(w, r)
+		//SetRedirectHandler(w, r, sm)
 	case "/redirect":
-		//RedirectHandler(w, r)
+		//RedirectHandler(w, r, sm)
 	default:
 		http.NotFound(w, r) // Default case for undefined paths
 	}
@@ -51,6 +56,7 @@ func consoleInput(listener *net.Listener, shutdown chan bool) {
 func main() {
 	// Create a WaitGroup to manage multiple goroutines
 	var wg sync.WaitGroup
+	sm = *session.NewSessionManager(REDIS_ADDR)
 
 	// Create a channel to signal server shutdown
 	shutdown := make(chan bool)
