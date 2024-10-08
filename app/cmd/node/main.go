@@ -3,55 +3,36 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"marshmello/pkg/networking"
+	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 )
 
-func main() {
-	listener, err := networking.CreateListening(networking.CONN_PORT)
-
-	if err != nil {
-		fmt.Println("Error listening:", err.Error())
-		os.Exit(1)
+// Router function to redirect paths to their corresponding handlers
+func router(w http.ResponseWriter, r *http.Request) {
+	switch r.URL.Path {
+	case "/get-aes":
+		//GetAesHandler(w, r)
+	case "/set-redirect":
+		//SetRedirectHandler(w, r)
+	case "/redirect":
+		//RedirectHandler(w, r)
+	default:
+		http.NotFound(w, r) // Default case for undefined paths
 	}
-
-	defer listener.Close()
-
-	var wg sync.WaitGroup
-	shutdown := make(chan bool)
-
-	wg.Add(1)
-	go clientAccepter(&listener, shutdown, &wg)
-	go consoleInput(&listener, shutdown)
-	// Wait for all client handlers to finish
-	wg.Wait()
-	fmt.Println("Server shutdown complete")
 }
 
-func clientAccepter(listener *net.Listener, shutdown chan bool, wg *sync.WaitGroup) {
+// Function to handle incoming requests with goroutines
+func handleRequest(w http.ResponseWriter, r *http.Request, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for {
-		conn, err := (*listener).Accept()
-		if err != nil {
-			select {
-			case <-shutdown:
-				return // Normal shutdown
-			default:
-				fmt.Println("Error accepting connection:", err)
-			}
-			continue
-		}
-
-		wg.Add(1)
-		//go handleClient(conn, &wg)
-		var b []byte
-		conn.Read(b)
-	}
+	router(w, r) // Redirect request to the appropriate handler
+	fmt.Printf("Finished handling request from %s for %s\n", r.RemoteAddr, r.URL.Path)
 }
 
+// Function to listen for "EXIT" command and close the server
 func consoleInput(listener *net.Listener, shutdown chan bool) {
 	// Wait for EXIT command
 	fmt.Println("Type 'EXIT' to close: ")
@@ -61,8 +42,50 @@ func consoleInput(listener *net.Listener, shutdown chan bool) {
 		if strings.TrimSpace(strings.ToUpper(text)) == "EXIT" {
 			fmt.Println("Shutting down server...")
 			close(shutdown)
-			(*listener).Close()
+			(*listener).Close() // Close the server listener
 			return
 		}
 	}
+}
+
+func main() {
+	// Create a WaitGroup to manage multiple goroutines
+	var wg sync.WaitGroup
+
+	// Create a channel to signal server shutdown
+	shutdown := make(chan bool)
+
+	// Create a new HTTP server and a handler function for all requests
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		wg.Add(1)
+		go handleRequest(w, r, &wg) // Handle each request in a new goroutine
+	})
+
+	// Listen on port 8080
+	listener, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		log.Fatal("Error starting the server: ", err)
+	}
+
+	// Start the HTTP server
+	go func() {
+		log.Println("Starting server on :8080")
+		if err := http.Serve(listener, nil); err != nil {
+			if err.Error() == "use of closed network connection" {
+				log.Println("Server closed.")
+			} else {
+				log.Fatal("Server error: ", err)
+			}
+		}
+	}()
+
+	// Start listening for console input to shut down the server
+	go consoleInput(&listener, shutdown)
+
+	// Wait for the shutdown signal
+	<-shutdown
+
+	// Wait for all goroutines to finish before shutting down
+	wg.Wait()
+	log.Println("All requests have been processed. Server is now shut down.")
 }

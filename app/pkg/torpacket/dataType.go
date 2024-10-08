@@ -8,9 +8,12 @@ type GetAesResponse struct {
 	AesKey string
 }
 
+type SetRedirectRequest struct {
+	Addr string
+}
+
 type RedirectRequest struct {
-	Addr              string
-	RedirectedMessage string
+	Message string
 }
 
 type ReceiveRequest struct {
