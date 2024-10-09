@@ -6,12 +6,13 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"encoding/base64"
 	"io"
 )
 
 const (
-	AES_KEY_SIZE = 128
-	RSA_KEY_SIZE = 2048
+	AES_KEY_SIZE = 128 / 8
+	RSA_KEY_SIZE = 2048 / 8
 )
 
 type Encrypor interface {
@@ -112,4 +113,64 @@ func (a *AESEncryptor) Decrypt(ciphertext []byte) ([]byte, error) {
 	}
 
 	return decryptedData, nil
+}
+
+// Exposed function: Encrypts using RSA and returns base64-encoded ciphertext
+func (r *RSAEncryptor) EncryptBase64(textBase64 string) (string, error) {
+	text, err := base64.StdEncoding.DecodeString(textBase64)
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext, err := r.Encrypt(text)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+// Exposed function: Decrypts base64-encoded ciphertext using RSA and returns base64-encoded plaintext
+func (r *RSAEncryptor) DecryptBase64(ciphertextBase64 string) (string, error) {
+	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextBase64)
+	if err != nil {
+		return "", err
+	}
+
+	plaintext, err := r.Decrypt(ciphertext)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(plaintext), nil
+}
+
+// Exposed function: Encrypts using AES and returns base64-encoded ciphertext
+func (a *AESEncryptor) EncryptBase64(textBase64 string) (string, error) {
+	text, err := base64.StdEncoding.DecodeString(textBase64)
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext, err := a.Encrypt(text)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+// Exposed function: Decrypts base64-encoded ciphertext using AES and returns base64-encoded plaintext
+func (a *AESEncryptor) DecryptBase64(ciphertextBase64 string) (string, error) {
+	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextBase64)
+	if err != nil {
+		return "", err
+	}
+
+	plaintext, err := a.Decrypt(ciphertext)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(plaintext), nil
 }
