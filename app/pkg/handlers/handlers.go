@@ -78,3 +78,76 @@ func GetAesHandler(w http.ResponseWriter, r *http.Request, sm session.SessionMan
 		return
 	}
 }
+
+/*
+Request
+GET /set-redirect
+json:
+
+	{
+		session: string session key
+		addr: base64 string, the string is encrypted with aes.
+		The decrypted string is a base64 of the addr of redirect node.
+		The format is ip:port
+	}
+
+Response
+
+	OK
+*/
+func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionManager) {
+	var setRedirectRequest SetRedirectRequest
+	var aesDecryption encryption.AESEncryptor
+	var sessionData *session.SessionData
+	var err error
+
+	err = json.NewDecoder(r.Body).Decode(&setRedirectRequest)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
+		fmt.Fprintf(w, "Error reading json data.")
+		return
+	}
+
+	sessionData, err = sm.PullData(setRedirectRequest.Session)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
+		fmt.Fprintf(w, "Error getting session key.")
+		return
+	}
+
+	aesDecryption.Key, err = base64.StdEncoding.DecodeString(sessionData.AESKey)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
+		fmt.Fprintf(w, "Error getting aes key.")
+		return
+	}
+
+	b64decodedAddr, err := aesDecryption.DecryptBase64(setRedirectRequest.Addr)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
+		fmt.Fprintf(w, "Error decrypting address.")
+		return
+	}
+
+	addr, err := base64.StdEncoding.DecodeString(b64decodedAddr)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
+		fmt.Fprintf(w, "Error decoding address.")
+		return
+	}
+
+	err = sm.AppendAddr(setRedirectRequest.Session, string(addr))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

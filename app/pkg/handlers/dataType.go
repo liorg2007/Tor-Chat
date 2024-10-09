@@ -10,13 +10,16 @@ type GetAesResponse struct {
 }
 
 type SetRedirectRequest struct {
-	Addr string
+	Session string
+	Addr    string
 }
 
 type RedirectRequest struct {
+	Session string
 	Message string
 }
 
 type ReceiveRequest struct {
+	Session string
 	Message string
 }
