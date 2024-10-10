@@ -16,7 +16,12 @@ type SetRedirectRequest struct {
 
 type RedirectRequest struct {
 	Session string
-	Message string
+	Message string //base64
+}
+
+type RedirectRequestJson struct {
+	MsgType string
+	Data    string
 }
 
 type ReceiveRequest struct {
