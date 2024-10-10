@@ -183,3 +183,36 @@ func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.Sessi
 
 	EncryptResponse(w, aesDecryption, successResponse)
 }
+
+/*
+Request
+GET /redirect
+json:
+
+	{
+		session: string session key
+		data: base64 string, the string is encrypted with aes.
+		The decrypted string is a json of the wanted request:
+		json: {
+			type: string (eg. /get-aes, /set-redirect etc)
+			data: b64 string, dont touch it
+		}
+	}
+
+Response
+
+	json:
+
+
+	{
+		data: data encoded with base64, then encypted with aes, and sent as b64
+	}
+*/
+func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionManager) {
+	var redirectReq RedirectRequest
+	var reqJson RedirectRequestJson
+	var aesEncryptor encryption.AESEncryptor
+
+	var sessionData *session.SessionData
+
+}
