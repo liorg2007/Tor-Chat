@@ -15,8 +15,8 @@ type SessionManager struct {
 }
 
 type SessionData struct {
-	AESKey    string   `json:"aes_key"`
-	Addresses []string `json:"addresses"`
+	AESKey  string `json:"aes_key"`
+	Address string `json:"address"`
 }
 
 func NewSessionManager(redisAddr string) *SessionManager {
@@ -51,12 +51,17 @@ func (sm *SessionManager) CreateSession(aesKey string) (string, error) {
 
 	// Create session data
 	sessionData := SessionData{
-		AESKey:    aesKey,
-		Addresses: make([]string, 0),
+		AESKey:  aesKey,
+		Address: "",
 	}
 
-	// Store in Redis with 24 hour expiration
+	// Store in Redis with 24-hour expiration
 	err = sm.client.HSet(ctx, "session:"+sessionToken, "aes_key", sessionData.AESKey).Err()
+	if err != nil {
+		return "", err
+	}
+
+	err = sm.client.HSet(ctx, "session:"+sessionToken, "address", sessionData.Address).Err()
 	if err != nil {
 		return "", err
 	}
@@ -69,8 +74,8 @@ func (sm *SessionManager) CreateSession(aesKey string) (string, error) {
 	return sessionToken, nil
 }
 
-// AppendAddr adds an address to the session
-func (sm *SessionManager) AppendAddr(sessionToken, addr string) error {
+// UpdateAddress updates the address in the session
+func (sm *SessionManager) UpdateAddress(sessionToken, addr string) error {
 	ctx := context.Background()
 
 	// Check if session exists
@@ -82,8 +87,8 @@ func (sm *SessionManager) AppendAddr(sessionToken, addr string) error {
 		return errors.New("session not found")
 	}
 
-	// Append address to the list
-	err = sm.client.SAdd(ctx, "session:"+sessionToken+":addresses", addr).Err()
+	// Update address
+	err = sm.client.HSet(ctx, "session:"+sessionToken, "address", addr).Err()
 	return err
 }
 
@@ -106,14 +111,14 @@ func (sm *SessionManager) PullData(sessionToken string) (*SessionData, error) {
 		return nil, err
 	}
 
-	// Get addresses
-	addresses, err := sm.client.SMembers(ctx, "session:"+sessionToken+":addresses").Result()
+	// Get address
+	address, err := sm.client.HGet(ctx, "session:"+sessionToken, "address").Result()
 	if err != nil {
 		return nil, err
 	}
 
 	return &SessionData{
-		AESKey:    aesKey,
-		Addresses: addresses,
+		AESKey:  aesKey,
+		Address: address,
 	}, nil
 }
