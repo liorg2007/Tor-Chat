@@ -3,29 +3,43 @@ package handlers
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/session"
 	"net/http"
 )
 
-// EncryptResponse takes a response object or an error message, encrypts it with AES, and writes it to the http.ResponseWriter
-func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, data interface{}) {
+// Security Notes:
+// 1. All data is encrypted using AES encryption
+// 2. Session management is required for all endpoints except /get-aes
+// 3. The AES key is exchanged securely using RSA encryption
+// 4. All binary data is encoded using base64 for safe transmission
+
+/*
+General API Response format:
+
+	{
+	    "data": base64 string  // AES encrypted payload, encoded as base64
+	}
+*/
+
+// EncryptResponse takes a response object or an error message, encrypts it with AES,
+// and writes it to the http.ResponseWriter in the standard response format:
+//
+//	{
+//	    "data": "base64 string"  // AES encrypted payload, encoded as base64
+//	}
+func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, data interface{}, statusCode int) {
 	// Marshal the response data into JSON
 	responseJSON, err := json.Marshal(data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		errorResponse := map[string]string{"error": "Error encoding response data."}
-		json.NewEncoder(w).Encode(errorResponse)
+		http.Error(w, "Error encoding response data.", http.StatusInternalServerError)
 		return
 	}
 
 	// Encrypt the JSON response using AES
 	encryptedData, err := aesEncryptor.Encrypt(responseJSON)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		errorResponse := map[string]string{"error": "Error encrypting response data."}
-		json.NewEncoder(w).Encode(errorResponse)
+		http.Error(w, "Error encrypting response data.", http.StatusInternalServerError)
 		return
 	}
 
@@ -34,145 +48,159 @@ func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor
 
 	// Write the encrypted response in JSON format
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]string{
 		"data": b64EncryptedData,
 	})
 }
 
-/*
-Request
-GET /get-aes
-json:
-
-	{
-		rsa_key: b64 rsa key
+// SendResponse takes a response object or an error message and writes it as JSON
+// to the http.ResponseWriter without encryption
+func SendResponse(w http.ResponseWriter, data interface{}, statusCode int) {
+	// Marshal the response data into JSON
+	responseJSON, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "Error encoding response data.", http.StatusInternalServerError)
+		return
 	}
 
-Response
+	// Set the header and write the JSON response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(responseJSON)
+}
 
-	json:
-	{
-		session: string session key
-		aes_key: b64 encrypted key
-	}
-*/
+// GetAesHandler generates and encrypts an AES key, returning it with a session token
+//
+// Request Type: "/get-aes"
+// Request Payload (after decryption):
+//
+//	{
+//	    "rsa_key": string  // Client's RSA public key in PEM format
+//	}
+//
+// Response (after decryption):
+//
+//	{
+//	    "session": string,  // Session token for subsequent requests
+//	    "aes_key": string   // AES key encrypted with client's RSA public key, base64 encoded
+//	}
+//
+// Error Responses:
+// - 400 Bad Request: "Error reading json data." or "Error reading RSA key."
+// - 500 Internal Server Error: "Error creating session key." or "Error encrypting AES key."
 func GetAesHandler(w http.ResponseWriter, r *http.Request, sm session.SessionManager) {
 	var getAesRequest GetAesRequest
 	var rsaEncryptor encryption.RSAEncryptor
-	var aesEncyption encryption.AESEncryptor
-	var aes_key string
+	var aesEncryption encryption.AESEncryptor
+	var aesKey string
 	var ans GetAesResponse
 
+	// Decode the incoming JSON request
 	err := json.NewDecoder(r.Body).Decode(&getAesRequest)
-
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
-		fmt.Fprintf(w, "Error reading json data.")
+		http.Error(w, "Error reading json data.", http.StatusBadRequest)
 		return
 	}
 
+	// Decode the RSA public key
 	rsaEncryptor.PublicKey, err = encryption.DecodeRSAPublicKey(getAesRequest.RsaKey)
-
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
-		fmt.Fprintf(w, "Error reading rsa key.")
+		http.Error(w, "Error reading RSA key.", http.StatusBadRequest)
 		return
 	}
 
-	aesEncyption.GenerateKey()
-	aes_key = encryption.EncodeAESKey(aesEncyption.Key)
+	// Generate the AES key
+	aesEncryption.GenerateKey()
+	aesKey = encryption.EncodeAESKey(aesEncryption.Key)
 
-	sessionToken, err := sm.CreateSession(aes_key)
-
+	// Create session and store the AES key
+	sessionToken, err := sm.CreateSession(aesKey)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
-		fmt.Fprintf(w, "Error creating session key.")
+		http.Error(w, "Error creating session key.", http.StatusInternalServerError)
 		return
 	}
 
-	encryptedKey, err := rsaEncryptor.Encrypt(aesEncyption.Key)
-
+	// Encrypt the AES key using the RSA public key
+	encryptedKey, err := rsaEncryptor.Encrypt(aesEncryption.Key)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError) // Return 500 Internal Server Error
-		fmt.Fprintf(w, "Error creating encrypted key.")
+		http.Error(w, "Error encrypting AES key.", http.StatusInternalServerError)
 		return
 	}
 
+	// Build the response with session token and encrypted AES key
 	ans.Session = sessionToken
 	ans.Aes_key = base64.StdEncoding.EncodeToString(encryptedKey)
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(ans)
-	if err != nil {
-		http.Error(w, "Error encoding response", http.StatusInternalServerError)
-		return
-	}
+	// Send the response without encryption (AES not required here)
+	SendResponse(w, ans, http.StatusOK)
 }
 
-/*
-Request
-GET /set-redirect
-json:
-
-	{
-		session: string session key
-		addr: base64 string, the string is encrypted with aes.
-		The decrypted string is a base64 of the addr of redirect node.
-		The format is ip:port
-	}
-
-Response
-
-	{
-		data: base64 encrypted "OK"
-	}
-*/
+// SetRedirectHandler sets the redirect address in a session, using AES encryption for the address
+//
+// Request Type: "/set-redirect"
+// Request Payload (after decryption):
+//
+//	{
+//	    "session": string,  // Session token from /get-aes
+//	    "addr": string      // Base64 encoded, AES encrypted redirect address (format: "ip:port")
+//	}
+//
+// Response (after decryption):
+//
+//	{
+//	    "message": "OK"  // Success message
+//	}
+//
+// Error Responses:
+// - 400 Bad Request: "Error reading JSON data." or "Error decrypting address."
+// - 401 Unauthorized: "Error retrieving session data."
+// - 500 Internal Server Error: "Error decoding AES key." or "Error decoding base64 address."
 func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionManager) {
 	var setRedirectRequest SetRedirectRequest
 	var aesDecryption encryption.AESEncryptor
 	var sessionData *session.SessionData
 	var err error
 
-	// Parse incoming request JSON
+	// Decode the incoming JSON request
 	err = json.NewDecoder(r.Body).Decode(&setRedirectRequest)
 	if err != nil {
-		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error reading json data."})
+		SendResponse(w, map[string]string{"error": "Error reading JSON data."}, http.StatusBadRequest)
 		return
 	}
 
-	// Get the session data (AES key and other details)
+	// Retrieve session data, including the AES key
 	sessionData, err = sm.PullData(setRedirectRequest.Session)
 	if err != nil {
-		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error retrieving session data."})
+		SendResponse(w, map[string]string{"error": "Error retrieving session data."}, http.StatusUnauthorized)
 		return
 	}
 
-	// Decode AES key from the session
+	// Decode the AES key from the session
 	aesDecryption.Key, err = base64.StdEncoding.DecodeString(sessionData.AESKey)
 	if err != nil {
-		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error decoding AES key."})
+		SendResponse(w, map[string]string{"error": "Error decoding AES key."}, http.StatusInternalServerError)
 		return
 	}
 
-	// Decrypt the incoming addr using AES key
+	// Decrypt the base64-encoded address using AES
 	b64decodedAddr, err := aesDecryption.DecryptBase64(setRedirectRequest.Addr)
 	if err != nil {
-		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error decrypting address."})
+		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error decrypting address."}, http.StatusBadRequest)
 		return
 	}
 
-	// Decode the base64-encoded address (ip:port)
+	// Decode the base64-encoded address string (ip:port)
 	addr, err := base64.StdEncoding.DecodeString(b64decodedAddr)
 	if err != nil {
-		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error decoding base64 address."})
+		EncryptResponse(w, aesDecryption, map[string]string{"error": "Error decoding base64 address."}, http.StatusInternalServerError)
 		return
 	}
 
 	// Append the redirect address to the session
 	err = sm.AppendAddr(setRedirectRequest.Session, string(addr))
 	if err != nil {
-		EncryptResponse(w, aesDecryption, map[string]string{"error": err.Error()})
+		EncryptResponse(w, aesDecryption, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
 		return
 	}
 
@@ -180,32 +208,22 @@ func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.Sessi
 	successResponse := map[string]string{
 		"message": "OK",
 	}
-
-	EncryptResponse(w, aesDecryption, successResponse)
+	EncryptResponse(w, aesDecryption, successResponse, http.StatusOK)
 }
 
 /*
-Request
 GET /redirect
-json:
 
 	{
-		session: string session key
-		data: base64 string, the string is encrypted with aes.
-		The decrypted string is a json of the wanted request:
-		json: {
-			type: string (eg. /get-aes, /set-redirect etc)
-			data: b64 string, dont touch it
-		}
+	    "session": string,     // Session key for authentication
+	    "data": base64 string  // AES encrypted payload, encoded as base64
 	}
 
-Response
-
-	json:
-
+The decrypted 'data' field contains:
 
 	{
-		data: data encoded with base64, then encypted with aes, and sent as b64
+	    "type": string,        // Endpoint identifier (e.g., "/get-aes", "/set-redirect")
+	    "data": base64 string  // Endpoint-specific payload, left as-is
 	}
 */
 func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionManager) {
