@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/session"
 	"net/http"
@@ -198,7 +200,7 @@ func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.Sessi
 	}
 
 	// Append the redirect address to the session
-	err = sm.AppendAddr(setRedirectRequest.Session, string(addr))
+	err = sm.UpdateAddress(setRedirectRequest.Session, string(addr))
 	if err != nil {
 		EncryptResponse(w, aesDecryption, map[string]string{"error": err.Error()}, http.StatusInternalServerError)
 		return
@@ -229,8 +231,71 @@ The decrypted 'data' field contains:
 func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionManager) {
 	var redirectReq RedirectRequest
 	var reqJson RedirectRequestJson
-	var aesEncryptor encryption.AESEncryptor
 
+	var aesEncryptor encryption.AESEncryptor
+	var err error
 	var sessionData *session.SessionData
 
+	// Decode the incoming JSON request
+	err = json.NewDecoder(r.Body).Decode(&redirectReq)
+	if err != nil {
+		SendResponse(w, map[string]string{"error": "Error reading JSON data."}, http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve session data, including the AES key
+	sessionData, err = sm.PullData(redirectReq.Session)
+	if err != nil {
+		SendResponse(w, map[string]string{"error": "Error retrieving session data."}, http.StatusUnauthorized)
+		return
+	}
+
+	// Decode the AES key from the session
+	aesEncryptor.Key, err = base64.StdEncoding.DecodeString(sessionData.AESKey)
+	if err != nil {
+		SendResponse(w, map[string]string{"error": "Error decoding AES key."}, http.StatusInternalServerError)
+		return
+	}
+
+	if sessionData.Address == "" {
+		SendResponse(w, map[string]string{"error": "Addr no initialzied."}, http.StatusInternalServerError)
+		return
+	}
+
+	// Decrypt the base64-encoded data using AES
+	b64encodedMsg, err := aesEncryptor.DecryptBase64(redirectReq.Message)
+	if err != nil {
+		EncryptResponse(w, aesEncryptor, map[string]string{"error": "Error decrypting data."}, http.StatusBadRequest)
+		return
+	}
+
+	reqJsonString, err := base64.StdEncoding.DecodeString(b64encodedMsg)
+	if err != nil {
+		EncryptResponse(w, aesEncryptor, map[string]string{"error": "Error decoding b64 data."}, http.StatusInternalServerError)
+		return
+	}
+
+	// Decode the incoming JSON data
+	err = json.Unmarshal(reqJsonString, &reqJson)
+	if err != nil {
+		EncryptResponse(w, aesEncryptor, map[string]string{"error": "Error reading JSON data."}, http.StatusBadRequest)
+		return
+	}
+
+	SerializeAndRedirect(w, aesEncryptor, reqJson, sessionData)
+}
+
+func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, reqJson RedirectRequestJson, sessionData *session.SessionData) {
+	var path string = fmt.Sprintf("http://%s/%s", sessionData.Address, reqJson.MsgType)
+
+	// Send POST request
+	resp, err := http.Post(path, "application/json", bytes.NewBuffer([]byte(reqJson.Data)))
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Return the response
+	EncryptResponse(w, aesEncryptor, resp.Body, resp.StatusCode)
 }

@@ -21,7 +21,6 @@ type RedirectRequest struct {
 
 type RedirectRequestJson struct {
 	MsgType string
-	Session string
 	Data    string
 }
 
