@@ -1,0 +1,20 @@
+services:
+  node1:
+    image: node_test  # Use the same image for all nodes
+    build:
+      context: .
+      dockerfile: ./docker/node/Dockerfile
+    ports:
+      - "8081:8080"
+
+  node2:
+    image: node_test  # Reuse the same image
+    ports:
+      - "8082:8080"
+
+  node3:
+    image: node_test  # Reuse the same image
+    ports:
+      - "8083:8080"
+
+  

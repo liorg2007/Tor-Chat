@@ -5,14 +5,14 @@ FROM golang:latest
 WORKDIR /app
 
 # Copy the Go module files
-COPY go.mod go.sum ./
+COPY ../../go.mod ../../go.sum ./
 
 # Download the Go module dependencies
 RUN go mod download
 
 # Copy the source code into the container
-COPY ./cmd/node/ ./cmd/node/
-COPY ./pkg/ ./pkg/
+COPY cmd/node/ ./cmd/node/
+COPY pkg/ ./pkg/
 
 # Build the Go application
 RUN (CGO_ENABLED=0 GOOS=linux cd ./cmd/node && go build -o ./node)
