@@ -1,20 +1,85 @@
+version: "3.8"
 services:
+  # Node 1
   node1:
-    image: node_test  # Use the same image for all nodes
+    image: node-test
     build:
       context: .
       dockerfile: ./docker/node/Dockerfile
     ports:
       - "8081:8080"
+    depends_on:
+      - redis1
+    environment:
+      - REDIS_HOST=redis1
+      - REDIS_PORT=6379
+    networks:
+      - node1-network
 
+  redis1:
+    image: redis:latest
+    networks:
+      - node1-network
+    volumes:
+      - redis1-data:/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  # Node 2
   node2:
-    image: node_test  # Reuse the same image
+    image: node-test
     ports:
       - "8082:8080"
+    depends_on:
+      - redis2
+    environment:
+      - REDIS_HOST=redis2
+      - REDIS_PORT=6379
+    networks:
+      - node2-network
 
+  redis2:
+    image: redis:latest
+    networks:
+      - node2-network
+    volumes:
+      - redis2-data:/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  # Node 3
   node3:
-    image: node_test  # Reuse the same image
+    image: node-test
     ports:
       - "8083:8080"
+    depends_on:
+      - redis3
+    environment:
+      - REDIS_HOST=redis3
+      - REDIS_PORT=6379
+    networks:
+      - node3-network
 
-  
+  redis3:
+    image: redis:latest
+    networks:
+      - node3-network
+    volumes:
+      - redis3-data:/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+# Define separate networks for each node
+networks:
+  node1-network:
+  node2-network:
+  node3-network:
+
+# Define persistent volumes for each Redis instance
+volumes:
+  redis1-data:
+  redis2-data:
+  redis3-data:

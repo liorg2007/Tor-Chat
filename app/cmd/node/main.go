@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"marshmello/pkg/handlers"
 	"marshmello/pkg/session"
 	"net"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"sync"
 )
 
-const REDIS_ADDR = "addr"
+const REDIS_ADDR = "localhost:6379"
 
 var sm session.SessionManager
 
@@ -20,11 +21,11 @@ var sm session.SessionManager
 func router(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/get-aes":
-		//GetAesHandler(w, r, sm)
+		handlers.GetAesHandler(w, r, sm)
 	case "/set-redirect":
-		//SetRedirectHandler(w, r, sm)
+		handlers.SetRedirectHandler(w, r, sm)
 	case "/redirect":
-		//RedirectHandler(w, r, sm)
+		handlers.RedirectHandler(w, r, sm)
 	default:
 		http.NotFound(w, r) // Default case for undefined paths
 	}
