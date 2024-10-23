@@ -19,14 +19,21 @@ type SessionData struct {
 	Address string `json:"address"`
 }
 
-func NewSessionManager(redisAddr string) *SessionManager {
+func NewSessionManager(redisAddr string) (*SessionManager, error) {
+	err := error(nil)
 	client := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
 
+	// Create context for Redis operations
+	ctx := context.Background()
+
+	// Test the connection
+	_, err = client.Ping(ctx).Result()
+
 	return &SessionManager{
 		client: client,
-	}
+	}, err
 }
 
 // generateSessionToken creates a random session token

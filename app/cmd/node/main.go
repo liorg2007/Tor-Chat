@@ -13,19 +13,17 @@ import (
 	"sync"
 )
 
-const REDIS_ADDR = "localhost:6379"
-
-var sm session.SessionManager
+var sm *session.SessionManager = nil
 
 // Router function to redirect paths to their corresponding handlers
 func router(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/get-aes":
-		handlers.GetAesHandler(w, r, sm)
+		handlers.GetAesHandler(w, r, *sm)
 	case "/set-redirect":
-		handlers.SetRedirectHandler(w, r, sm)
+		handlers.SetRedirectHandler(w, r, *sm)
 	case "/redirect":
-		handlers.RedirectHandler(w, r, sm)
+		handlers.RedirectHandler(w, r, *sm)
 	default:
 		http.NotFound(w, r) // Default case for undefined paths
 	}
@@ -57,7 +55,27 @@ func consoleInput(listener *net.Listener, shutdown chan bool) {
 func main() {
 	// Create a WaitGroup to manage multiple goroutines
 	var wg sync.WaitGroup
-	sm = *session.NewSessionManager(REDIS_ADDR)
+	var err error
+
+	// Connecting to redis service
+	redisHost := os.Getenv("REDIS_HOST")
+	redisPort := os.Getenv("REDIS_PORT")
+
+	if redisHost == "" {
+		redisHost = "localhost" // default fallback
+	}
+	if redisPort == "" {
+		redisPort = "6379" // default fallback
+	}
+
+	sm, err = session.NewSessionManager(fmt.Sprintf("%s:%s", redisHost, redisPort))
+
+	if err != nil {
+		log.Fatal("Error connecting to redis service: ", err)
+		return
+	}
+
+	log.Printf("Connected to redis service on %s:%s", redisHost, redisPort)
 
 	// Create a channel to signal server shutdown
 	shutdown := make(chan bool)
@@ -72,6 +90,7 @@ func main() {
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatal("Error starting the server: ", err)
+		return
 	}
 
 	// Start the HTTP server
