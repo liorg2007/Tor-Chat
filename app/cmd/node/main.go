@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"marshmello/pkg/handlers"
@@ -11,28 +12,41 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/gorilla/mux"
 )
 
 var sm *session.SessionManager = nil
 
+// WriteErrorResponse writes a standard JSON error response to the http.ResponseWriter.
+func WriteErrorResponse(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
 // Router function to redirect paths to their corresponding handlers
-func router(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/get-aes":
+func router() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/get-aes", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetAesHandler(w, r, *sm)
-	case "/set-redirect":
+	}).Methods("GET")
+
+	r.HandleFunc("/set-redirect", func(w http.ResponseWriter, r *http.Request) {
 		handlers.SetRedirectHandler(w, r, *sm)
-	case "/redirect":
+	}).Methods("GET")
+
+	r.HandleFunc("/redirect", func(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectHandler(w, r, *sm)
-	default:
-		http.NotFound(w, r) // Default case for undefined paths
-	}
+	}).Methods("GET")
+
+	return r
 }
 
 // Function to handle incoming requests with goroutines
 func handleRequest(w http.ResponseWriter, r *http.Request, wg *sync.WaitGroup) {
 	defer wg.Done()
-	router(w, r) // Redirect request to the appropriate handler
+	router().ServeHTTP(w, r) // Use Gorilla Mux to handle the request
 	fmt.Printf("Finished handling request from %s for %s\n", r.RemoteAddr, r.URL.Path)
 }
 
@@ -57,7 +71,7 @@ func main() {
 	var wg sync.WaitGroup
 	var err error
 
-	// Connecting to redis service
+	// Connecting to Redis service
 	redisHost := os.Getenv("REDIS_HOST")
 	redisPort := os.Getenv("REDIS_PORT")
 
@@ -68,23 +82,24 @@ func main() {
 		redisPort = "6379" // default fallback
 	}
 
-	sm, err = session.NewSessionManager(fmt.Sprintf("%s:%s", redisHost, redisPort))
+	// Uncomment the following lines to initialize the session manager
 
+	sm, err = session.NewSessionManager(fmt.Sprintf("%s:%s", redisHost, redisPort))
 	if err != nil {
-		log.Fatal("Error connecting to redis service: ", err)
+		log.Fatal("Error connecting to Redis service: ", err)
 		return
 	}
 
-	log.Printf("Connected to redis service on %s:%s", redisHost, redisPort)
+	log.Printf("Connected to Redis service on %s:%s", redisHost, redisPort)
 
 	// Create a channel to signal server shutdown
 	shutdown := make(chan bool)
 
-	// Create a new HTTP server and a handler function for all requests
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		wg.Add(1)
-		go handleRequest(w, r, &wg) // Handle each request in a new goroutine
-	})
+	// Create a new Gorilla Mux router
+	r := router()
+
+	// Start listening for requests
+	http.Handle("/", r)
 
 	// Listen on port 8080
 	listener, err := net.Listen("tcp", ":8080")
