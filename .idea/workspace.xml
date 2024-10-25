@@ -5,18 +5,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67c5f7ba-4dd3-4cc3-8198-57bac3613f2d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/app/cmd/node/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/cmd/node/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/cmd/client/circuit.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/cmd/client/communication.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/cmd/client/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/go.mod" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/pkg/handlers/handlers.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/pkg/handlers/handlers.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
   <component name="GOROOT" url="file://$PROJECT_DIR$/../../../../../Program Files/Go" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Go/src/runtime/panic.go" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Go/src/runtime/signal_windows.go" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Go/src/sync/waitgroup.go" root0="SKIP_INSPECTION" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
@@ -28,6 +44,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "Go Build.go build gui.go.executor": "Run",
     "Go Build.go build main.go.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
@@ -39,10 +57,19 @@
     "last_opened_file_path": "C:/Users/User/Documents/Coding/Tor Chat",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm"
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "editor.preferences.fonts.default"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Go Build.go build gui.go">
+    <configuration name="go build gui.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="Tor Chat" />
+      <working_directory value="$PROJECT_DIR$/app" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/app/cmd/client/gui.go" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Tor Chat" />
       <working_directory value="$PROJECT_DIR$/app" />
@@ -53,6 +80,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build gui.go" />
         <item itemvalue="Go Build.go build main.go" />
       </list>
     </recent_temporary>
@@ -71,16 +99,5 @@
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/app/pkg/handlers/handlers.go</url>
-          <line>94</line>
-          <option name="timeStamp" value="19" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

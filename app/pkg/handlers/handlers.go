@@ -24,12 +24,7 @@ General API Response format:
 	}
 */
 
-// EncryptResponse takes a response object or an error message, encrypts it with AES,
-// and writes it to the http.ResponseWriter in the standard response format:
-//
-//	{
-//	    "data": "base64 string"  // AES encrypted payload, encoded as base64
-//	}
+// EncryptResponse encrypts and writes a JSON response
 func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, data interface{}, statusCode int) {
 	// Marshal the response data into JSON
 	responseJSON, err := json.Marshal(data)
@@ -56,8 +51,7 @@ func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor
 	})
 }
 
-// SendResponse takes a response object or an error message and writes it as JSON
-// to the http.ResponseWriter without encryption
+// SendResponse writes a JSON response without encryption
 func SendResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	// Marshal the response data into JSON
 	responseJSON, err := json.Marshal(data)
