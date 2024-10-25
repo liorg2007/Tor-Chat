@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	AES_KEY_SIZE = 128 / 8
-	RSA_KEY_SIZE = 2048 / 8
+	AES_KEY_SIZE = 128
+	RSA_KEY_SIZE = 2048
 )
 
 type Encrypor interface {

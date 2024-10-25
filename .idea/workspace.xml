@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67c5f7ba-4dd3-4cc3-8198-57bac3613f2d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/cmd/client/circuit.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/cmd/client/communication.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/cmd/client/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/cmd/node/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/cmd/node/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/pkg/encryption/encryption.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/pkg/encryption/encryption.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/pkg/handlers/dataType.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/pkg/handlers/dataType.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/pkg/handlers/handlers.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/pkg/handlers/handlers.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -46,6 +44,7 @@
   "keyToString": {
     "DefaultGoTemplateProperty": "Go File",
     "Go Build.go build gui.go.executor": "Run",
+    "Go Build.go build main.go (1).executor": "Run",
     "Go Build.go build main.go.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
@@ -61,13 +60,21 @@
     "settings.editor.selected.configurable": "editor.preferences.fonts.default"
   }
 }]]></component>
-  <component name="RunManager" selected="Go Build.go build gui.go">
+  <component name="RunManager" selected="Go Build.go build main.go (1)">
     <configuration name="go build gui.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="Tor Chat" />
       <working_directory value="$PROJECT_DIR$/app" />
       <kind value="FILE" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$/app/cmd/client/gui.go" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build main.go (1)" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="Tor Chat" />
+      <working_directory value="$PROJECT_DIR$/app" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/app/cmd/client/main.go" />
       <method v="2" />
     </configuration>
     <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
@@ -80,6 +87,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build main.go (1)" />
         <item itemvalue="Go Build.go build gui.go" />
         <item itemvalue="Go Build.go build main.go" />
       </list>

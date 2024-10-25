@@ -9,6 +9,14 @@ type GetAesResponse struct {
 	Aes_key string
 }
 
+type RegularResponse struct {
+	Message string
+}
+
+type EncryptedResponse struct {
+	Data string
+}
+
 type SetRedirectRequest struct {
 	Session string
 	Addr    string

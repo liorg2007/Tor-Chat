@@ -20,7 +20,7 @@ import (
 General API Response format:
 
 	{
-	    "data": base64 string  // AES encrypted payload, encoded as base64
+	    "Data": base64 string  // AES encrypted payload, encoded as base64
 	}
 */
 
@@ -47,7 +47,7 @@ func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]string{
-		"data": b64EncryptedData,
+		"Data": b64EncryptedData,
 	})
 }
 
@@ -120,7 +120,7 @@ func GetAesHandler(w http.ResponseWriter, r *http.Request, sm session.SessionMan
 	// Encrypt the AES key using the RSA public key
 	encryptedKey, err := rsaEncryptor.Encrypt(aesEncryption.Key)
 	if err != nil {
-		http.Error(w, "Error encrypting AES key.", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -202,7 +202,7 @@ func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.Sessi
 
 	// Return an AES-encrypted "OK" response
 	successResponse := map[string]string{
-		"message": "OK",
+		"Message": "OK",
 	}
 	EncryptResponse(w, aesDecryption, successResponse, http.StatusOK)
 }

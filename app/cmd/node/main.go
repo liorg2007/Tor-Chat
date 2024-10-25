@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"marshmello/pkg/handlers"
 	"marshmello/pkg/session"
@@ -28,26 +30,65 @@ func WriteErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 // Router function to redirect paths to their corresponding handlers
 func router() *mux.Router {
 	r := mux.NewRouter()
+
+	// Middleware to log all requests
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Parse the form data and query parameters
+			r.ParseForm()
+
+			// Create the log message
+			logMsg := fmt.Sprintf("\n\033[32m=== Request Details ===\n")
+			logMsg += fmt.Sprintf("Method: %s\n", r.Method)
+			logMsg += fmt.Sprintf("Path: %s\n", r.URL.Path)
+			logMsg += fmt.Sprintf("Remote Address: %s\n", r.RemoteAddr)
+
+			// Log headers
+			logMsg += fmt.Sprintf("\nHeaders:\n")
+			for key, values := range r.Header {
+				logMsg += fmt.Sprintf("  %s: %s\n", key, strings.Join(values, ", "))
+			}
+
+			// Log query parameters
+			if len(r.URL.Query()) > 0 {
+				logMsg += fmt.Sprintf("\nQuery Parameters:\n")
+				for key, values := range r.URL.Query() {
+					logMsg += fmt.Sprintf("  %s: %s\n", key, strings.Join(values, ", "))
+				}
+			}
+
+			// Log body if it exists
+			if r.Body != nil && r.Header.Get("Content-Type") != "" {
+				var bodyBytes []byte
+				bodyBytes, _ = io.ReadAll(r.Body)
+				// Restore the body for the actual handler
+				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+				if len(bodyBytes) > 0 {
+					logMsg += fmt.Sprintf("\nBody:\n  %s\n", string(bodyBytes))
+				}
+			}
+
+			logMsg += "==================\033[0m\n"
+
+			fmt.Print(logMsg)
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	r.HandleFunc("/get-aes", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetAesHandler(w, r, *sm)
-	}).Methods("GET")
+	}).Methods("POST")
 
 	r.HandleFunc("/set-redirect", func(w http.ResponseWriter, r *http.Request) {
 		handlers.SetRedirectHandler(w, r, *sm)
-	}).Methods("GET")
+	}).Methods("POST")
 
 	r.HandleFunc("/redirect", func(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectHandler(w, r, *sm)
-	}).Methods("GET")
+	}).Methods("POST")
 
 	return r
-}
-
-// Function to handle incoming requests with goroutines
-func handleRequest(w http.ResponseWriter, r *http.Request, wg *sync.WaitGroup) {
-	defer wg.Done()
-	router().ServeHTTP(w, r) // Use Gorilla Mux to handle the request
-	fmt.Printf("Finished handling request from %s for %s\n", r.RemoteAddr, r.URL.Path)
 }
 
 // Function to listen for "EXIT" command and close the server
