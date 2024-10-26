@@ -78,3 +78,26 @@ func CreateSetAddrRequest(addr string, session string, encryptor encryption.AESE
 
 	return req, nil
 }
+
+func CreateRedirectRequest(session string, redirectedJson handlers.RedirectRequestJson, encryptor encryption.AESEncryptor) (handlers.RedirectRequest, error) {
+	var finalReq handlers.RedirectRequest
+	var jsonString string
+	var err error
+
+	jsonBytes, err := json.Marshal(redirectedJson)
+
+	if err != nil {
+		return handlers.RedirectRequest{}, err
+	}
+
+	jsonString = base64.StdEncoding.EncodeToString(jsonBytes)
+
+	finalReq.Message, err = encryptor.EncryptBase64(jsonString)
+	if err != nil {
+		return handlers.RedirectRequest{}, err
+	}
+
+	finalReq.Session = session
+
+	return finalReq, nil
+}
