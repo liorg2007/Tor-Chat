@@ -45,3 +45,36 @@ func GetAesKey(addr string) ([]byte, string, error) {
 
 	return aesKey, res.Session, nil
 }
+
+// CreateAesRequest, creates the struct
+func CreateAesRequest(encryptor *encryption.RSAEncryptor) (handlers.GetAesRequest, error) {
+	var req handlers.GetAesRequest
+	var err error
+
+	// Encode the RSA public key for transmission
+	req.RsaKey, err = encryption.EncodeRSAPublicKey(encryptor.PublicKey)
+	if err != nil {
+		return handlers.GetAesRequest{}, err
+	}
+
+	return req, nil
+}
+
+// CreateSetAddrRequest, creates the struct of CreateSetAddrRequest with the addr being encrypted
+
+func CreateSetAddrRequest(addr string, session string, encryptor encryption.AESEncryptor) (handlers.SetRedirectRequest, error) {
+	var req handlers.SetRedirectRequest
+	var err error
+
+	b64addr := base64.StdEncoding.EncodeToString([]byte(addr))
+
+	req.Addr, err = encryptor.EncryptBase64(b64addr)
+
+	if err != nil {
+		return handlers.SetRedirectRequest{}, err
+	}
+
+	req.Session = session
+
+	return req, nil
+}
