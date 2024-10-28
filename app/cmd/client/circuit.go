@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -98,6 +99,44 @@ func CreateRedirectRequest(session string, redirectedJson handlers.RedirectReque
 	}
 
 	finalReq.Session = session
+
+	return finalReq, nil
+}
+
+func CreateRequestThroughNetwork(nodeList *list.List, message interface{}, msgType string) (handlers.RedirectRequest, error) {
+	var finalReq handlers.RedirectRequest
+	var reqJson handlers.RedirectRequestJson
+
+	jsonBytes, err := json.Marshal(message)
+
+	if err != nil {
+		return handlers.RedirectRequest{}, err
+	}
+
+	jsonString := base64.StdEncoding.EncodeToString(jsonBytes)
+
+	reqJson.Data = jsonString
+	reqJson.MsgType = msgType
+
+	for n := nodeList.Back(); n != nil; n = n.Prev() {
+		currentLayer, err := CreateRedirectRequest(n.Value.(NodeInfo).Session, reqJson, n.Value.(NodeInfo).AesEncryptor)
+		if err != nil {
+			return handlers.RedirectRequest{}, err
+		}
+
+		jsonBytes, err := json.Marshal(currentLayer)
+
+		if err != nil {
+			return handlers.RedirectRequest{}, err
+		}
+
+		jsonString := base64.StdEncoding.EncodeToString(jsonBytes)
+
+		reqJson.Data = jsonString
+		reqJson.MsgType = "redirect"
+
+		finalReq = currentLayer
+	}
 
 	return finalReq, nil
 }

@@ -1,22 +1,24 @@
 package main
 
-import "fmt"
-
-var CircuitInfo map[string]NodeInfo // The key is the session token
+import (
+	"marshmello/pkg/encryption"
+)
 
 type NodeInfo struct {
 	Addr            string
-	AesKey          []byte
+	AesEncryptor    encryption.AESEncryptor
+	Session         string
 	RedirectionAddr string
 }
 
 func main() {
-	key, ses, err := GetAesKey("localhost:8081")
+	//key, ses, err := GetAesKey("localhost:8081")
 
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-		return
-	}
+	// if err != nil {
+	// 	fmt.Printf("Error: %s", err)
+	// 	return
+	// }
 
-	fmt.Printf("Got key: %s\n Session Token: %s\n", key, ses)
+	// fmt.Printf("Got key: %s\n Session Token: %s\n", key, ses)
+
 }
