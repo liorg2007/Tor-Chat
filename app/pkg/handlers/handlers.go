@@ -200,6 +200,8 @@ func SetRedirectHandler(w http.ResponseWriter, r *http.Request, sm session.Sessi
 		return
 	}
 
+	fmt.Println(string(addr))
+
 	// Return an AES-encrypted "OK" response
 	successResponse := map[string]string{
 		"Message": "OK",

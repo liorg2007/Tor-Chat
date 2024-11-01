@@ -15,6 +15,7 @@ services:
       - REDIS_PORT=6379
     networks:
       - node1-network
+      - shared-network
 
   redis1:
     image: redis:latest
@@ -38,6 +39,7 @@ services:
       - REDIS_PORT=6379
     networks:
       - node2-network
+      - shared-network
 
   redis2:
     image: redis:latest
@@ -61,6 +63,7 @@ services:
       - REDIS_PORT=6379
     networks:
       - node3-network
+      - shared-network
 
   redis3:
     image: redis:latest
@@ -72,11 +75,12 @@ services:
       restart_policy:
         condition: on-failure
 
-# Define separate networks for each node
+# Define separate networks for each node and a shared network for inter-node communication
 networks:
   node1-network:
   node2-network:
   node3-network:
+  shared-network:
 
 # Define persistent volumes for each Redis instance
 volumes:

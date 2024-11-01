@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	AES_KEY_SIZE = 128
+	AES_KEY_SIZE = 16
 	RSA_KEY_SIZE = 2048
 )
 

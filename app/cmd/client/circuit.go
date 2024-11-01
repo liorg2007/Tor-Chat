@@ -9,7 +9,7 @@ import (
 	"marshmello/pkg/handlers"
 )
 
-// GetAesKey requests the AES key and session token from the server
+// GetAesKey requests the AES key and session token from the a node
 func GetAesKey(addr string) ([]byte, string, error) {
 	var req handlers.GetAesRequest
 	var rsaEnc encryption.RSAEncryptor
@@ -41,10 +41,50 @@ func GetAesKey(addr string) ([]byte, string, error) {
 	// Decode the base64-encoded AES key from the response
 	aesKey, err := base64.StdEncoding.DecodeString(res.Aes_key)
 	if err != nil {
-		return nil, "", errors.New("error decoding AES key")
+		return nil, "", err
 	}
 
-	return aesKey, res.Session, nil
+	decrypted, err := rsaEnc.Decrypt(aesKey)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return decrypted, res.Session, nil
+}
+
+func SetRedirectAddr(redirectionAddr string, nodeInfo NodeInfo) (string, error) {
+	req, err := CreateSetAddrRequest(redirectionAddr, nodeInfo.Session, nodeInfo.AesEncryptor)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Send request to /get-aes
+	respJson, err := SendHttpRequest(nodeInfo.Addr, req, "set-redirect")
+	if err != nil {
+		return "", err
+	}
+
+	var resp handlers.EncryptedResponse
+	err = json.Unmarshal(respJson, &resp)
+
+	if err != nil {
+		return "", err
+	}
+
+	dec, err := nodeInfo.AesEncryptor.DecryptBase64(resp.Data)
+
+	if err != nil {
+		return "", err
+	}
+
+	responseString, err := base64.StdEncoding.DecodeString(dec)
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(responseString), nil
 }
 
 // CreateAesRequest, creates the struct
