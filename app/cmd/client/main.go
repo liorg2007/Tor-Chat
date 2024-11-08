@@ -1,6 +1,8 @@
 package main
 
 import (
+	"container/list"
+	"fmt"
 	"marshmello/pkg/encryption"
 )
 
@@ -12,13 +14,20 @@ type NodeInfo struct {
 }
 
 func main() {
-	//key, ses, err := GetAesKey("localhost:8081")
+	nodeOne, err := CreateInitialConnection("http://localhost:8081/", "node2:8080")
 
-	// if err != nil {
-	// 	fmt.Printf("Error: %s", err)
-	// 	return
-	// }
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
 
-	// fmt.Printf("Got key: %s\n Session Token: %s\n", key, ses)
+	nodeList := list.List{}
+	nodeList.PushBack(nodeOne)
 
+	err = GetAesFromNetwork(&nodeList)
+
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return
+	}
 }
