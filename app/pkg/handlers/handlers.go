@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/session"
@@ -265,11 +266,15 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionM
 		return
 	}
 
+	fmt.Println(string(b64encodedMsg))
+
 	reqJsonString, err := base64.StdEncoding.DecodeString(b64encodedMsg)
 	if err != nil {
 		EncryptResponse(w, aesEncryptor, map[string]string{"error": "Error decoding b64 data."}, http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Println(string(reqJsonString))
 
 	// Decode the incoming JSON data
 	err = json.Unmarshal(reqJsonString, &reqJson)
@@ -282,16 +287,66 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionM
 }
 
 func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, reqJson RedirectRequestJson, sessionData *session.SessionData) {
-	var path string = fmt.Sprintf("http://%s/%s", sessionData.Address, reqJson.MsgType)
+	// Determine the target path
+	path := fmt.Sprintf("http://%s/%s", sessionData.Address, reqJson.MsgType)
+
+	// Decode and unmarshal the corresponding struct based on MsgType
+	requestStruct, err := CreateStructFromMsgType(reqJson.MsgType, reqJson.Data)
+	if err != nil {
+		http.Error(w, "Invalid MsgType or data format", http.StatusBadRequest)
+		return
+	}
+
+	// Serialize request struct as JSON
+	requestData, err := json.Marshal(requestStruct)
+	if err != nil {
+		http.Error(w, "Failed to serialize request data", http.StatusInternalServerError)
+		return
+	}
 
 	// Send POST request
-	resp, err := http.Post(path, "application/json", bytes.NewBuffer([]byte(reqJson.Data)))
+	resp, err := http.Post(path, "application/json", bytes.NewBuffer(requestData))
 	if err != nil {
-		fmt.Println("Error:", err)
+		http.Error(w, "Failed to send POST request", http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
 
-	// Return the response
+	// Encrypt and send the response back to the client
 	EncryptResponse(w, aesEncryptor, resp.Body, resp.StatusCode)
+}
+
+func CreateStructFromMsgType(msgType string, encodedData string) (interface{}, error) {
+	// Decode Base64 data
+	decodedData, err := base64.StdEncoding.DecodeString(encodedData)
+	if err != nil {
+		return nil, errors.New("failed to decode base64 data")
+	}
+
+	// Unmarshal JSON into the corresponding struct based on MsgType
+	var result interface{}
+	switch msgType {
+	case "get-aes":
+		var request GetAesRequest
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	case "set-redirect":
+		var request SetRedirectRequest
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	case "redirect":
+		var request RedirectRequest
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	default:
+		return nil, errors.New("unknown MsgType")
+	}
+
+	return result, nil
 }

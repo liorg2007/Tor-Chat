@@ -141,7 +141,14 @@ func GetAesFromNetwork(nodeList *list.List) error {
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
 	if err != nil {
-		return err
+		resp, err := DecodeRequestThroughNetwork(nodeList, string(respJson))
+
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("error: %s", resp)
+
 	}
 
 	var resp handlers.EncryptedResponse
@@ -181,4 +188,37 @@ func GetAesFromNetwork(nodeList *list.List) error {
 	//(nodeList.Back().Value.(NodeInfo)).AesEncryptor.Key =
 
 	return nil
+}
+
+func DecodeRequestThroughNetwork(nodeList *list.List, response string) (string, error) {
+	var err error
+	var jsonStr handlers.EncryptedResponse
+	err = json.Unmarshal([]byte(response), &jsonStr)
+
+	if err != nil {
+		// Return the error if decryption fails
+		return "", err
+	}
+
+	data := jsonStr.Data
+
+	for n := nodeList.Front(); n != nil; n = n.Next() {
+		front := nodeList.Front()
+		if front == nil {
+			// Return an error if the list is empty
+			return "", fmt.Errorf("error: nodeList is empty")
+		}
+
+		nodeInfo, ok := front.Value.(NodeInfo)
+		if !ok {
+			// Return an error if the value is not of type NodeInfo
+			return "", fmt.Errorf("error: nodeList.Front().Value is not of type NodeInfo")
+		}
+		data, err = nodeInfo.AesEncryptor.DecryptBase64(data)
+		if err != nil {
+			// Return the error if decryption fails
+			return "", err
+		}
+	}
+	return data, nil
 }
