@@ -30,4 +30,14 @@ func main() {
 		fmt.Printf("Error: %s", err)
 		return
 	}
+
+	for n := nodeList.Front(); n != nil; n = n.Next() {
+		node, ok := n.Value.(NodeInfo)
+		if !ok {
+			fmt.Println("unexpected type in node list; expected *NodeInfo")
+			return
+		}
+
+		fmt.Printf("Addr: %s, Key: %s, Session: %s, Redirect: %s\n", node.Addr, node.AesEncryptor.Key, node.Session, node.RedirectionAddr)
+	}
 }

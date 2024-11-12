@@ -28,15 +28,13 @@ func CreateInitialConnection(addr string, redirectionAddr string) (NodeInfo, err
 		Session:      ses,
 	}
 
-	str, err := SetInitRedirectAddr(redirectionAddr, nodeOne)
+	_, err = SetInitRedirectAddr(redirectionAddr, nodeOne)
 
 	if err != nil {
 		return NodeInfo{}, err
 	}
 
 	nodeOne.RedirectionAddr = redirectionAddr
-
-	fmt.Printf("Response: %s", str)
 
 	return nodeOne, nil
 }
@@ -120,21 +118,19 @@ func SetInitRedirectAddr(redirectionAddr string, nodeInfo NodeInfo) (string, err
 }
 
 func GetAesFromNetwork(nodeList *list.List) error {
+	var res handlers.GetAesResponse
 	rsa := encryption.RSAEncryptor{}
 	err := rsa.GenerateKey()
-
 	if err != nil {
 		return err
 	}
 
 	getAes, err := CreateAesRequest(&rsa)
-
 	if err != nil {
 		return err
 	}
 
 	req, err := CreateRequestThroughNetwork(nodeList, getAes, "get-aes")
-
 	if err != nil {
 		return err
 	}
@@ -142,65 +138,66 @@ func GetAesFromNetwork(nodeList *list.List) error {
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
 	if err != nil {
 		resp, err := DecodeRequestThroughNetwork(nodeList, string(respJson))
-
 		if err != nil {
 			return err
 		}
-
 		return fmt.Errorf("error: %s", resp)
-
 	}
 
 	var resp handlers.EncryptedResponse
 	err = json.Unmarshal(respJson, &resp)
-
 	if err != nil {
 		return err
 	}
 
-	front := nodeList.Front()
-	if front == nil {
-		// Return an error if the list is empty
-		return fmt.Errorf("error: nodeList is empty")
+	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
+	if err != nil {
+		return err
 	}
 
-	nodeInfo, ok := front.Value.(NodeInfo)
+	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the response
+	if err := json.Unmarshal(decodedResp, &res); err != nil {
+		return errors.New("error decoding AES response")
+	}
+
+	// Decode the base64-encoded AES key from the response
+	aesKey, err := base64.StdEncoding.DecodeString(res.Aes_key)
+	if err != nil {
+		return err
+	}
+
+	decrypted, err := rsa.Decrypt(aesKey)
+	if err != nil {
+		return err
+	}
+
+	back, ok := nodeList.Back().Value.(NodeInfo)
 	if !ok {
-		// Return an error if the value is not of type NodeInfo
-		return fmt.Errorf("error: nodeList.Front().Value is not of type NodeInfo")
+		return errors.New("unexpected type in node list; expected *NodeInfo")
 	}
 
-	// Attempt decryption
-	dec, err := nodeInfo.AesEncryptor.DecryptBase64(resp.Data)
-	if err != nil {
-		// Return the error if decryption fails
-		return err
+	// Create a new NodeInfo entity with the decrypted AES key and session
+	newNode := NodeInfo{
+		AesEncryptor: encryption.AESEncryptor{Key: decrypted},
+		Session:      res.Session,
+		Addr:         back.RedirectionAddr,
 	}
 
-	responseString, err := base64.StdEncoding.DecodeString(dec)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Response: %s", responseString)
-
-	//(nodeList.Back().Value.(NodeInfo)).AesEncryptor.Key =
+	// Add the new NodeInfo entity to the list
+	nodeList.PushBack(newNode)
 
 	return nil
 }
 
 func DecodeRequestThroughNetwork(nodeList *list.List, response string) (string, error) {
 	var err error
-	var jsonStr handlers.EncryptedResponse
-	err = json.Unmarshal([]byte(response), &jsonStr)
 
-	if err != nil {
-		// Return the error if decryption fails
-		return "", err
-	}
-
-	data := jsonStr.Data
+	data := response
 
 	for n := nodeList.Front(); n != nil; n = n.Next() {
 		front := nodeList.Front()

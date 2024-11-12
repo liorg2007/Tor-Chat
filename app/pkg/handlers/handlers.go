@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/session"
 	"net/http"
@@ -25,13 +26,22 @@ General API Response format:
 	}
 */
 
-// EncryptResponse encrypts and writes a JSON response
 func EncryptResponse(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, data interface{}, statusCode int) {
-	// Marshal the response data into JSON
-	responseJSON, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, "Error encoding response data.", http.StatusInternalServerError)
-		return
+	// Marshal the data into JSON if it's a struct
+	var responseJSON []byte
+	var err error
+
+	switch v := data.(type) {
+	case []byte:
+		// If data is already []byte (like respBody), use it directly
+		responseJSON = v
+	default:
+		// Otherwise, marshal the struct or other type into JSON
+		responseJSON, err = json.Marshal(data)
+		if err != nil {
+			http.Error(w, "Error encoding response data.", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Encrypt the JSON response using AES
@@ -266,15 +276,11 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionM
 		return
 	}
 
-	fmt.Println(string(b64encodedMsg))
-
 	reqJsonString, err := base64.StdEncoding.DecodeString(b64encodedMsg)
 	if err != nil {
 		EncryptResponse(w, aesEncryptor, map[string]string{"error": "Error decoding b64 data."}, http.StatusInternalServerError)
 		return
 	}
-
-	fmt.Println(string(reqJsonString))
 
 	// Decode the incoming JSON data
 	err = json.Unmarshal(reqJsonString, &reqJson)
@@ -312,8 +318,16 @@ func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncr
 	}
 	defer resp.Body.Close()
 
+	// Read and print the response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response body", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("Redirection Response:", string(respBody))
+
 	// Encrypt and send the response back to the client
-	EncryptResponse(w, aesEncryptor, resp.Body, resp.StatusCode)
+	EncryptResponse(w, aesEncryptor, respBody, resp.StatusCode)
 }
 
 func CreateStructFromMsgType(msgType string, encodedData string) (interface{}, error) {
