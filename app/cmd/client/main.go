@@ -24,12 +24,39 @@ func main() {
 	nodeList := list.List{}
 	nodeList.PushBack(nodeOne)
 
-	err = GetAesFromNetwork(&nodeList)
+	newNode, err := GetAesFromNetwork(&nodeList)
 
 	if err != nil {
-		fmt.Printf("Error: %s", err)
+		fmt.Printf("Error 2: %s", err)
 		return
 	}
+
+	err = SetAddrFromNetwork(&nodeList, &newNode, "node3:8080")
+
+	nodeList.PushBack(newNode)
+
+	if err != nil {
+		fmt.Printf("Error node 2: %s", err)
+		return
+	}
+
+	newNode2, err := GetAesFromNetwork(&nodeList)
+
+	if err != nil {
+		fmt.Printf("Error node 3 setup: %s", err)
+		return
+	}
+
+	err = SetAddrFromNetwork(&nodeList, &newNode2, "172.21.112.1:8080")
+
+	nodeList.PushBack(newNode2)
+
+	if err != nil {
+		fmt.Printf("Error ndoe 3 setup: %s", err)
+		return
+	}
+
+	GetAesFromNetwork(&nodeList)
 
 	for n := nodeList.Front(); n != nil; n = n.Next() {
 		node, ok := n.Value.(NodeInfo)

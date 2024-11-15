@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/handlers"
 )
@@ -117,20 +118,88 @@ func SetInitRedirectAddr(redirectionAddr string, nodeInfo NodeInfo) (string, err
 	return string(responseString), nil
 }
 
-func GetAesFromNetwork(nodeList *list.List) error {
+func GetAesFromNetwork(nodeList *list.List) (NodeInfo, error) {
 	var res handlers.GetAesResponse
 	rsa := encryption.RSAEncryptor{}
 	err := rsa.GenerateKey()
 	if err != nil {
-		return err
+		return NodeInfo{}, err
 	}
 
 	getAes, err := CreateAesRequest(&rsa)
 	if err != nil {
-		return err
+		return NodeInfo{}, err
 	}
 
 	req, err := CreateRequestThroughNetwork(nodeList, getAes, "get-aes")
+	if err != nil {
+		return NodeInfo{}, err
+	}
+
+	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
+	if err != nil {
+		resp, err := DecodeRequestThroughNetwork(nodeList, string(respJson))
+		if err != nil {
+			return NodeInfo{}, err
+		}
+		return NodeInfo{}, fmt.Errorf("error: %s", resp)
+	}
+
+	var resp handlers.EncryptedResponse
+	err = json.Unmarshal(respJson, &resp)
+	if err != nil {
+		return NodeInfo{}, err
+	}
+
+	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
+	if err != nil {
+		return NodeInfo{}, err
+	}
+
+	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
+	if err != nil {
+		return NodeInfo{}, err
+	}
+
+	// Unmarshal the response
+	if err := json.Unmarshal(decodedResp, &res); err != nil {
+		return NodeInfo{}, errors.New("error decoding AES response")
+	}
+
+	// Decode the base64-encoded AES key from the response
+	aesKey, err := base64.StdEncoding.DecodeString(res.Aes_key)
+	if err != nil {
+		return NodeInfo{}, err
+	}
+
+	decrypted, err := rsa.Decrypt(aesKey)
+	if err != nil {
+		return NodeInfo{}, err
+	}
+
+	back, ok := nodeList.Back().Value.(NodeInfo)
+	if !ok {
+		return NodeInfo{}, errors.New("unexpected type in node list; expected *NodeInfo")
+	}
+
+	// Create a new NodeInfo entity with the decrypted AES key and session
+	newNode := NodeInfo{
+		AesEncryptor: encryption.AESEncryptor{Key: decrypted},
+		Session:      res.Session,
+		Addr:         back.RedirectionAddr,
+	}
+
+	return newNode, nil
+}
+
+func SetAddrFromNetwork(nodeList *list.List, newNode *NodeInfo, redirectionAddr string) error {
+	setAddrReq, err := CreateSetAddrRequest(redirectionAddr, newNode.Session, newNode.AesEncryptor)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := CreateRequestThroughNetwork(nodeList, setAddrReq, "set-redirect")
 	if err != nil {
 		return err
 	}
@@ -150,72 +219,65 @@ func GetAesFromNetwork(nodeList *list.List) error {
 		return err
 	}
 
-	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
+	responseStringEnc, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
 	if err != nil {
 		return err
 	}
 
-	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
+	dec, err := newNode.AesEncryptor.DecryptBase64(responseStringEnc)
+
 	if err != nil {
 		return err
 	}
 
-	// Unmarshal the response
-	if err := json.Unmarshal(decodedResp, &res); err != nil {
-		return errors.New("error decoding AES response")
-	}
+	responseString, err := base64.StdEncoding.DecodeString(dec)
 
-	// Decode the base64-encoded AES key from the response
-	aesKey, err := base64.StdEncoding.DecodeString(res.Aes_key)
 	if err != nil {
 		return err
 	}
 
-	decrypted, err := rsa.Decrypt(aesKey)
-	if err != nil {
-		return err
-	}
+	log.Println(string(responseString))
 
-	back, ok := nodeList.Back().Value.(NodeInfo)
-	if !ok {
-		return errors.New("unexpected type in node list; expected *NodeInfo")
-	}
-
-	// Create a new NodeInfo entity with the decrypted AES key and session
-	newNode := NodeInfo{
-		AesEncryptor: encryption.AESEncryptor{Key: decrypted},
-		Session:      res.Session,
-		Addr:         back.RedirectionAddr,
-	}
-
-	// Add the new NodeInfo entity to the list
-	nodeList.PushBack(newNode)
+	newNode.RedirectionAddr = redirectionAddr
 
 	return nil
 }
 
 func DecodeRequestThroughNetwork(nodeList *list.List, response string) (string, error) {
 	var err error
-
 	data := response
 
 	for n := nodeList.Front(); n != nil; n = n.Next() {
-		front := nodeList.Front()
-		if front == nil {
-			// Return an error if the list is empty
-			return "", fmt.Errorf("error: nodeList is empty")
-		}
-
-		nodeInfo, ok := front.Value.(NodeInfo)
+		nodeInfo, ok := n.Value.(NodeInfo)
 		if !ok {
-			// Return an error if the value is not of type NodeInfo
 			return "", fmt.Errorf("error: nodeList.Front().Value is not of type NodeInfo")
 		}
+
+		// Decrypt the data using AesEncryptor
 		data, err = nodeInfo.AesEncryptor.DecryptBase64(data)
 		if err != nil {
-			// Return the error if decryption fails
 			return "", err
 		}
+
+		// Decode the decrypted data from Base64
+		decodedData, err := base64.StdEncoding.DecodeString(data)
+		if err != nil {
+			return "", fmt.Errorf("error decoding Base64: %v", err)
+		}
+
+		// Unmarshal the decoded JSON data into EncryptedResponse struct
+		var encryptedResponse handlers.EncryptedResponse
+		if err := json.Unmarshal(decodedData, &encryptedResponse); err != nil {
+			return "", fmt.Errorf("error decoding JSON: %v", err)
+		}
+
+		if encryptedResponse.Data == "" {
+			return data, nil
+		}
+
+		// Use the Data field for the next iteration
+		data = encryptedResponse.Data
 	}
+
 	return data, nil
 }
