@@ -269,12 +269,7 @@ func DecodeRequestThroughNetwork(nodeList *list.List, response string) (string, 
 		// Unmarshal the decoded JSON data into EncryptedResponse struct
 		var encryptedResponse handlers.EncryptedResponse
 		if err := json.Unmarshal(decodedData, &encryptedResponse); err != nil {
-			decodedData, err := base64.StdEncoding.DecodeString(data)
-			if err != nil {
-				return "", fmt.Errorf("error decoding Base64: %v", err)
-			}
-
-			return string(decodedData), nil
+			return data, nil
 		}
 
 		if encryptedResponse.Data == "" {
