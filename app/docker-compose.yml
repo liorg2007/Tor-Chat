@@ -61,9 +61,12 @@ services:
     environment:
       - REDIS_HOST=redis3
       - REDIS_PORT=6379
+      - OUTBOUND_ENABLED=true  # Custom flag to identify outbound functionality
     networks:
       - node3-network
       - shared-network
+    cap_add:
+      - NET_ADMIN  # Add capability to manage networking if needed
 
   redis3:
     image: redis:latest

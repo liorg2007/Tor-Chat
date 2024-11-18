@@ -313,7 +313,7 @@ func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncr
 	// Send POST request
 	resp, err := http.Post(path, "application/json", bytes.NewBuffer(requestData))
 	if err != nil {
-		http.Error(w, "Failed to send POST request", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to send POST request: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()

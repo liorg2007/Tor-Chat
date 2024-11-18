@@ -9,6 +9,7 @@ import (
 	"log"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/handlers"
+	"strings"
 )
 
 func CreateInitialConnection(addr string, redirectionAddr string) (NodeInfo, error) {
@@ -138,7 +139,7 @@ func GetAesFromNetwork(nodeList *list.List) (NodeInfo, error) {
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
 	if err != nil {
-		resp, err := DecodeRequestThroughNetwork(nodeList, string(respJson))
+		resp, err := DecodeErrorFromNetwork(err.Error(), nodeList)
 		if err != nil {
 			return NodeInfo{}, err
 		}
@@ -206,7 +207,7 @@ func SetAddrFromNetwork(nodeList *list.List, newNode *NodeInfo, redirectionAddr 
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
 	if err != nil {
-		resp, err := DecodeRequestThroughNetwork(nodeList, string(respJson))
+		resp, err := DecodeErrorFromNetwork(err.Error(), nodeList)
 		if err != nil {
 			return err
 		}
@@ -268,7 +269,12 @@ func DecodeRequestThroughNetwork(nodeList *list.List, response string) (string, 
 		// Unmarshal the decoded JSON data into EncryptedResponse struct
 		var encryptedResponse handlers.EncryptedResponse
 		if err := json.Unmarshal(decodedData, &encryptedResponse); err != nil {
-			return "", fmt.Errorf("error decoding JSON: %v", err)
+			decodedData, err := base64.StdEncoding.DecodeString(data)
+			if err != nil {
+				return "", fmt.Errorf("error decoding Base64: %v", err)
+			}
+
+			return string(decodedData), nil
 		}
 
 		if encryptedResponse.Data == "" {
@@ -280,4 +286,27 @@ func DecodeRequestThroughNetwork(nodeList *list.List, response string) (string, 
 	}
 
 	return data, nil
+}
+
+func DecodeErrorFromNetwork(errorStr string, nodeList *list.List) (string, error) {
+	// Split the string to extract the JSON part
+	jsonPart := strings.TrimPrefix(errorStr, "HTTP error: ")
+
+	// Define a struct to hold the parsed data
+	var result struct {
+		Data string `json:"Data"`
+	}
+
+	// Parse the JSON
+	err := json.Unmarshal([]byte(jsonPart), &result)
+	if err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return "", err
+	}
+
+	resp, err := DecodeRequestThroughNetwork(nodeList, result.Data)
+	if err != nil {
+		return "", err
+	}
+	return resp, nil
 }

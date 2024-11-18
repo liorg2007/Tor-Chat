@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/handlers"
 )
@@ -100,4 +101,60 @@ func CreateRequestThroughNetwork(nodeList *list.List, message interface{}, msgTy
 	}
 
 	return finalReq, nil
+}
+
+func CreateCircuit(node1 string, node2 string, node3 string, finalDst string) (MessageSender, error) {
+	nodeOne, err := CreateInitialConnection(node1, node2)
+
+	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return MessageSender{list.List{}}, err
+	}
+
+	nodeList := list.List{}
+	nodeList.PushBack(nodeOne)
+
+	newNode, err := GetAesFromNetwork(&nodeList)
+
+	if err != nil {
+		fmt.Printf("Error 2: %s", err)
+		return MessageSender{list.List{}}, err
+	}
+
+	err = SetAddrFromNetwork(&nodeList, &newNode, node3)
+
+	nodeList.PushBack(newNode)
+
+	if err != nil {
+		fmt.Printf("Error node 2: %s", err)
+		return MessageSender{list.List{}}, err
+	}
+
+	newNode2, err := GetAesFromNetwork(&nodeList)
+
+	if err != nil {
+		fmt.Printf("Error node 3 setup: %s", err)
+		return MessageSender{list.List{}}, err
+	}
+
+	err = SetAddrFromNetwork(&nodeList, &newNode2, finalDst)
+
+	nodeList.PushBack(newNode2)
+
+	if err != nil {
+		fmt.Printf("Error ndoe 3 setup: %s", err)
+		return MessageSender{list.List{}}, err
+	}
+
+	for n := nodeList.Front(); n != nil; n = n.Next() {
+		node, ok := n.Value.(NodeInfo)
+		if !ok {
+			fmt.Println("unexpected type in node list; expected *NodeInfo")
+			return MessageSender{list.List{}}, err
+		}
+
+		fmt.Printf("Addr: %s, Key: %s, Session: %s, Redirect: %s\n", node.Addr, node.AesEncryptor.Key, node.Session, node.RedirectionAddr)
+	}
+
+	return MessageSender{nodeList}, nil
 }

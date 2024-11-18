@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"container/list"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,4 +40,8 @@ func SendHttpRequest(addr string, data interface{}, msgType string) ([]byte, err
 	}
 
 	return respBody, nil
+}
+
+type MessageSender struct {
+	Circuit list.List
 }
