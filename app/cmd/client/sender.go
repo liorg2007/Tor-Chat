@@ -12,6 +12,13 @@ import (
 	"strings"
 )
 
+type NodeInfo struct {
+	Addr            string
+	AesEncryptor    encryption.AESEncryptor
+	Session         string
+	RedirectionAddr string
+}
+
 func CreateInitialConnection(addr string, redirectionAddr string) (NodeInfo, error) {
 	key, ses, err := GetInitAesKey("localhost:8081")
 
