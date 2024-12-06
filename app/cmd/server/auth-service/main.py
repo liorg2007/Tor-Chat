@@ -13,9 +13,9 @@ database = Database(DATABASE_URL)
 
 # Global jwt credentials
 secret = ""
-algorithm = ""
+algorithm = "HS256"   
 
-async def create_jwt(username: str):
+async def create_jwt(username: str) -> str:
     payload = {
     'user_id': username,
     'exp': datetime.now(timezone.utc) + timedelta(seconds=1800)
@@ -25,6 +25,17 @@ async def create_jwt(username: str):
 
     return token
 
+@app.post("/auth/jwt_val")
+async def validate_jwt(request: Request):
+    json_data = await request.json()
+    token = json_data['token']
+
+    try:
+        decoded_payload = jwt.decode(token, secret, algorithms=[algorithm])
+        return {"status": "valid"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    
 @app.post("/auth/register")
 async def register_account(request: Request):
     # Query to fetch all tables in the public schema
@@ -74,7 +85,7 @@ async def login_account(request: Request):
 
     # Create a session token
     jwt_token = await create_jwt(username)
-
+    print(jwt_token)
     # Return the token
     return {"status": "success", "token": jwt_token} 
 
@@ -116,11 +127,10 @@ async def startup():
 
     secret = secrets.token_hex(20)
     with open(".env", "w") as jwt_data:
-        jwt_data.writelines(["secret = " + secret, "algorithm = HS256"])
+        jwt_data.writelines(["secret = " + secret, " algorithm = HS256"])
 
     dotenv.load_dotenv()
     secret = os.getenv('secret')
-    algorithm = os.getenv('algorithm')
 
 
 @app.on_event("shutdown")
