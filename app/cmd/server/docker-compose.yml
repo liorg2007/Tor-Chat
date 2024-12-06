@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://auth_user:auth_password@auth-db:5432/auth_db
+    depends_on:
+      - auth-db
+    networks:
+      - auth_network
+
+  auth-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: auth_db
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    networks:
+      - auth_network
+
+volumes:
+  auth_data:
+
+networks:
+  auth_network:
