@@ -52,14 +52,54 @@ async def register_account(request: Request):
     values = {"username": username, "hashed_password": hashed_password}
     await database.fetch_one(query=insert_query, values=values)
 
+    return {"status": "success"}
+
+@app.post("/auth/login")
+async def login_account(request: Request):
+    # Query to fetch all tables in the public schema
+    json_data = await request.json()
+    username = json_data['username']
+    password = json_data['password']
+
+    # Hash the password (e.g., using SHA-256)
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+    # Check if the user already exists
+    check_query = "SELECT id FROM users WHERE name = :username AND password_hash = :password_hash"
+    existing_user = await database.fetch_one(query=check_query, values={"username": username, "password_hash": password_hash})
+
+    if not existing_user:
+        # If the user exists, raise an error
+        raise HTTPException(status_code=400, detail="Bad login credentials :(")
+
+    # Create a session token
     jwt_token = await create_jwt(username)
 
+    # Return the token
+    return {"status": "success", "token": jwt_token} 
+
+
+@app.get("/auth/users")
+async def get_users(request: Request):
+    insert_query = """
+    SELECT * FROM users;
+    """
+
+    users = await database.fetch_all(query=insert_query)
+
     # Return the newly created user details
-    return {"status": "success", "token": jwt_token}  # Return the list of table names
+    return {"status": "success", "users": users}  # Return the list of table names
 
+@app.get("/auth/clear")
+async def clear_users(request: Request):
+    insert_query = """
+    DELETE FROM users;
+    """
 
+    users = await database.fetch_one(query=insert_query)
 
-
+    # Return the newly created user details
+    return {"status": "success"}  # Return the list of table names
 
 @app.on_event("startup")
 async def startup():
