@@ -101,7 +101,7 @@ async def get_users(request: Request):
     # Return the newly created user details
     return {"status": "success", "users": users}  # Return the list of table names
 
-@app.get("/auth/clear")
+@app.delete("/auth/users")
 async def clear_users(request: Request):
     insert_query = """
     DELETE FROM users;
@@ -125,9 +125,10 @@ async def startup():
     await database.connect()  # Ensure the database connection is established
     await database.execute(db_init_query)  # Execute the table creation query
 
-    secret = secrets.token_hex(20)
-    with open(".env", "w") as jwt_data:
-        jwt_data.writelines(["secret = " + secret, " algorithm = HS256"])
+    if(not os.path.isfile(".env")):
+        secret = secrets.token_hex(20)
+        with open(".env", "w") as jwt_data:
+            jwt_data.writelines(["secret = " + secret, " algorithm = HS256"])
 
     dotenv.load_dotenv()
     secret = os.getenv('secret')
