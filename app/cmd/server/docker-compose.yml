@@ -1,11 +1,20 @@
 version: '3.9'
 
 services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+    ports:
+      - "8080:8080" # Exposed to the world
+    networks:
+      - auth_network
+      - message_network
+
+  # Authentication Service
   auth-service:
     build:
       context: ./auth-service
-    ports:
-      - "8000:8000"
     environment:
       DATABASE_URL: postgres://auth_user:auth_password@auth-db:5432/auth_db
     depends_on:
@@ -24,8 +33,31 @@ services:
     networks:
       - auth_network
 
+  # Messaging Service
+  message-service:
+    build:
+      context: ./message-service
+    environment:
+      REDIS_URL: redis://message-db:6379
+    depends_on:
+      - message-db
+    networks:
+      - message_network
+
+  message-db:
+    image: redis:latest
+    volumes:
+      - message_data:/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - message_network
+
 volumes:
   auth_data:
+  message_data:
 
 networks:
   auth_network:
+  message_network:
