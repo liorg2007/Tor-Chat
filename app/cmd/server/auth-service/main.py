@@ -37,8 +37,8 @@ async def validate_jwt(request: Request):
     json_data = await request.json()
     token = json_data['token']
     data = ''
-
-    try:
+    print(request)
+    try: 
         # This also gets data from the token and validates it (exception if invalid)
         data = jwt.decode(token, secret, algorithms=[algorithm])
     except Exception as e:
@@ -62,8 +62,12 @@ async def validate_jwt(request: Request):
 async def register_account(request: Request):
     # Extract JSON data
     json_data = await request.json()
-    username = json_data['username']
-    password = json_data['password']
+    username = password = ""
+    try:
+        username = json_data['username']
+        password = json_data['password']
+    except:
+        raise HTTPException(status_code=400, detail='json fields: {"usernmae":username, "passowrd":password}')
 
     # Hash the password (e.g., using SHA-256)
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
@@ -95,8 +99,13 @@ async def register_account(request: Request):
 async def login_account(request: Request):
     # Extract data from JSON
     json_data = await request.json()
-    username = json_data['username']
-    password = json_data['password']
+    username = password = ""
+    try:
+        username = json_data['username']
+        password = json_data['password']
+    except:
+        raise HTTPException(status_code=400, detail='json fields: {"usernmae":username, "passowrd":password}')
+
 
     # Hash the password (e.g., using SHA-256)
     password_hash = hashlib.sha256(password.encode()).hexdigest()

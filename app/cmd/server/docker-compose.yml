@@ -6,7 +6,7 @@ services:
     build:
       context: ./api-gateway
     ports:
-      - "8080:8080" # Exposed to the world
+      - "8080:8000" # Exposed to the world
     networks:
       - auth_network
       - message_network

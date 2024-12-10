@@ -1,4 +1,4 @@
-FROM python:latest
+FROM python:alpine3.21
 
 # Set the working directory in the container
 WORKDIR /app
@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed dependencies specified in requirements.txt
-RUN pip install --no-cache-dir "fastapi[standard]" asyncpg
+RUN pip install --no-cache-dir "fastapi[standard]" asyncpg httpx
 
 EXPOSE 8000
 
