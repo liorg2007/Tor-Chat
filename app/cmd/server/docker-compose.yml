@@ -38,14 +38,14 @@ services:
     build:
       context: ./message-service
     environment:
-      REDIS_URL: redis://message-db:6379
+      MONGO_URL: mongodb://message-db:27017
     depends_on:
       - message-db
     networks:
       - message_network
 
   message-db:
-    image: redis:latest
+    image: mongo:latest
     volumes:
       - message_data:/data
     deploy:

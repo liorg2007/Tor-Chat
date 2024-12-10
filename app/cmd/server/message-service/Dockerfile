@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed dependencies specified in requirements.txt
-RUN pip install --no-cache-dir "fastapi[standard]" databases asyncpg
+RUN pip install --no-cache-dir "fastapi[standard]" databases asyncpg pyjwt pymongo 
 
 EXPOSE 8000
 
