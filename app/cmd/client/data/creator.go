@@ -74,7 +74,6 @@ func CreateRequestThroughNetwork(nodeList *list.List, message interface{}, msgTy
 	if err != nil {
 		return handlers.RedirectRequest{}, err
 	}
-
 	jsonString := base64.StdEncoding.EncodeToString(jsonBytes)
 
 	reqJson.Data = jsonString
@@ -147,13 +146,13 @@ func CreateCircuit(node1 string, node2 string, node3 string, finalDst string) (M
 	}
 
 	for n := nodeList.Front(); n != nil; n = n.Next() {
-		node, ok := n.Value.(NodeInfo)
+		_, ok := n.Value.(NodeInfo)
 		if !ok {
 			fmt.Println("unexpected type in node list; expected *NodeInfo")
 			return MessageSender{list.List{}}, err
 		}
 
-		fmt.Printf("Addr: %s, Key: %s, Session: %s, Redirect: %s\n", node.Addr, node.AesEncryptor.Key, node.Session, node.RedirectionAddr)
+		//fmt.Printf("Addr: %s, Key: %s, Session: %s, Redirect: %s\n", node.Addr, node.AesEncryptor.Key, node.Session, node.RedirectionAddr)
 	}
 
 	return MessageSender{nodeList}, nil

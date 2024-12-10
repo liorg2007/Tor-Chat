@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"marshmello/pkg/encryption"
 	"marshmello/pkg/handlers"
 	"strings"
@@ -27,7 +26,7 @@ func CreateInitialConnection(addr string, redirectionAddr string) (NodeInfo, err
 		return NodeInfo{}, err
 	}
 
-	fmt.Printf("Got key: %s\n Session Token: %s\n Key Size: %d\n", key, ses, len(key))
+	//fmt.Printf("Got key: %s\n Session Token: %s\n Key Size: %d\n", key, ses, len(key))
 
 	enc := encryption.AESEncryptor{Key: key}
 
@@ -238,13 +237,13 @@ func SetAddrFromNetwork(nodeList *list.List, newNode *NodeInfo, redirectionAddr 
 		return err
 	}
 
-	responseString, err := base64.StdEncoding.DecodeString(dec)
+	_, err = base64.StdEncoding.DecodeString(dec)
 
 	if err != nil {
 		return err
 	}
 
-	log.Println(string(responseString))
+	//log.Println(string(responseString))
 
 	newNode.RedirectionAddr = redirectionAddr
 

@@ -64,8 +64,8 @@ async def register_account(request: Request):
     json_data = await request.json()
     username = password = ""
     try:
-        username = json_data['username']
-        password = json_data['password']
+        username = json_data['Username']
+        password = json_data['Password']
     except:
         raise HTTPException(status_code=400, detail='json fields: {"usernmae":username, "passowrd":password}')
 
@@ -99,10 +99,11 @@ async def register_account(request: Request):
 async def login_account(request: Request):
     # Extract data from JSON
     json_data = await request.json()
+    print(json_data)
     username = password = ""
     try:
-        username = json_data['username']
-        password = json_data['password']
+        username = json_data['Username']
+        password = json_data['Password']
     except:
         raise HTTPException(status_code=400, detail='json fields: {"usernmae":username, "passowrd":password}')
 

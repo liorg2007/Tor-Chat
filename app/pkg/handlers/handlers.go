@@ -281,7 +281,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionM
 		EncryptResponse(w, aesEncryptor, map[string]string{"error": "Error decoding b64 data."}, http.StatusInternalServerError)
 		return
 	}
-
+	fmt.Println(reqJsonString)
 	// Decode the incoming JSON data
 	err = json.Unmarshal(reqJsonString, &reqJson)
 	if err != nil {
@@ -293,6 +293,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, sm session.SessionM
 }
 
 func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncryptor, reqJson RedirectRequestJson, sessionData *session.SessionData) {
+	var requestData []byte
 	// Determine the target path
 	path := fmt.Sprintf("http://%s/%s", sessionData.Address, reqJson.MsgType)
 
@@ -304,7 +305,7 @@ func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncr
 	}
 
 	// Serialize request struct as JSON
-	requestData, err := json.Marshal(requestStruct)
+	requestData, err = json.Marshal(requestStruct)
 	if err != nil {
 		http.Error(w, "Failed to serialize request data", http.StatusInternalServerError)
 		return
@@ -332,11 +333,13 @@ func SerializeAndRedirect(w http.ResponseWriter, aesEncryptor encryption.AESEncr
 
 func CreateStructFromMsgType(msgType string, encodedData string) (interface{}, error) {
 	// Decode Base64 data
+	fmt.Println(string(encodedData))
+
 	decodedData, err := base64.StdEncoding.DecodeString(encodedData)
 	if err != nil {
 		return nil, errors.New("failed to decode base64 data")
 	}
-
+	fmt.Println(string(decodedData))
 	// Unmarshal JSON into the corresponding struct based on MsgType
 	var result interface{}
 	switch msgType {
@@ -354,6 +357,30 @@ func CreateStructFromMsgType(msgType string, encodedData string) (interface{}, e
 		result = request
 	case "redirect":
 		var request RedirectRequest
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	case "auth/login":
+		var request AuthUserRequest
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	case "auth/register":
+		var request AuthUserRequest
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	case "messages/send":
+		var request SendMessage
+		if err := json.Unmarshal(decodedData, &request); err != nil {
+			return nil, err
+		}
+		result = request
+	case "messages/fetch":
+		var request GetMessages
 		if err := json.Unmarshal(decodedData, &request); err != nil {
 			return nil, err
 		}

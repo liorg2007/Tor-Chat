@@ -62,18 +62,17 @@ async def catch_all(request: Request, service:str, path: str):
         except:
             raise HTTPException(status_code=400, detail="You got to send a json")
         
-        token = json_data.get("token")
+        token = json_data.get("Token")
         if not token:
             raise HTTPException(status_code=401, detail="Token is required for authentication")
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{AUTH_SERVICE}/auth/jwt_val", json={"token": token})
+            response = await client.post(f"{AUTH_SERVICE}/auth/jwt_val", json={"Token": token})
 
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.json().get("detail"))
         else:
             res = response.json()
-        
     # Now Call the right handler
     if service == 'auth':
         return await handle_auth(request, path)

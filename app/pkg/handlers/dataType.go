@@ -4,6 +4,21 @@ type GetAesRequest struct {
 	RsaKey string
 }
 
+type AuthUserRequest struct {
+	Username string
+	Password string
+}
+
+type SendMessage struct {
+	Username string
+	Message  string
+	Token    string
+}
+
+type GetMessages struct {
+	token string
+}
+
 type GetAesResponse struct {
 	Session string
 	Aes_key string

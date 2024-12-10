@@ -26,7 +26,7 @@ async def store_message(username, message):
 async def fetch_messages(request: Request):
     try:
         messages = list(collection.find({}, {"_id": 0}))
-        return messages
+        return {"messages":messages}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching messages: {str(e)}")
 
@@ -36,8 +36,8 @@ async def send_message(request: Request):
     json_data = await request.json()
     message = token = username = ""
     try:
-        message = json_data['message']
-        token = json_data['token']
+        message = json_data['Message']
+        token = json_data['Token']
     except:
         raise HTTPException(status_code=400, detail='json fields: {"message":message, "token":token}')
     
