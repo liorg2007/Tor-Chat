@@ -1,6 +1,8 @@
 import customtkinter as ctk
+import requests
 from PIL import Image, ImageTk
 from signup_screen import show_signup_screen  # Import signup screen function
+from chat import open_chat_screen
 
 def show_login_screen(app, cute_photo):
     for widget in app.winfo_children():
@@ -78,7 +80,7 @@ def show_login_screen(app, cute_photo):
         fg_color="black",
         text_color="green",
         hover_color="darkgreen",
-        command=lambda: login_action(username_entry, password_entry),
+        command=lambda: login_action(username_entry, password_entry, app),
     )
     login_button.pack(side="left", padx=10)
 
@@ -98,7 +100,12 @@ def show_login_screen(app, cute_photo):
     logo_label.place(relx=0.7, rely=0.5, anchor="center")
 
 # Login action
-def login_action(username_entry, password_entry):
+def login_action(username_entry, password_entry, app):
     username = username_entry.get()
     password = password_entry.get()
+    ans = requests.post("http://localhost:1234/login", json={"Username": username, "Password": password})
     print(f"Attempted login with username: {username} and password: {password}")
+    print(f"Received answer: {ans}")
+
+    if ans.status_code == 200:
+        open_chat_screen(app, username)
