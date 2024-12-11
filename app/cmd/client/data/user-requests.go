@@ -70,12 +70,12 @@ func parseMessages(jsonData string) ([]MessageResponse, error) {
 	return container.Messages, nil
 }
 
-func SendRegister(nodeList *list.List, data AuthUserRequest) {
+func SendRegister(nodeList *list.List, data AuthUserRequest) error {
 	req, err := CreateRequestThroughNetwork(nodeList, data, "auth/register")
 
 	if err != nil {
 		fmt.Println("Cant create request")
-		return
+		return err
 	}
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
@@ -83,42 +83,42 @@ func SendRegister(nodeList *list.List, data AuthUserRequest) {
 		resp, err := DecodeErrorFromNetwork(err.Error(), nodeList)
 		if err != nil {
 			fmt.Println("error decoding 1")
-			return
+			return err
 		}
 		decodedResp, err := base64.StdEncoding.DecodeString(resp)
 
 		fmt.Println(string(decodedResp))
-		return
+		return err
 	}
 
 	var resp handlers.EncryptedResponse
 	err = json.Unmarshal(respJson, &resp)
 	if err != nil {
 		fmt.Println("error unmarshaloing")
-		return
+		return err
 	}
 
 	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
 	if err != nil {
 		fmt.Println("error decoding 2")
-		return
+		return err
 	}
 
-	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
+	_, err = base64.StdEncoding.DecodeString(responseString)
 	if err != nil {
 		fmt.Println("error decoding b64")
-		return
+		return err
 	}
 
-	fmt.Println(string(decodedResp))
+	return nil
 }
 
-func SendLogin(nodeList *list.List, data AuthUserRequest) string {
+func SendLogin(nodeList *list.List, data AuthUserRequest) (string, error) {
 	req, err := CreateRequestThroughNetwork(nodeList, data, "auth/login")
 
 	if err != nil {
 		fmt.Println("Cant create request")
-		return ""
+		return "", nil
 	}
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
@@ -126,49 +126,49 @@ func SendLogin(nodeList *list.List, data AuthUserRequest) string {
 		resp, err := DecodeErrorFromNetwork(err.Error(), nodeList)
 		if err != nil {
 			fmt.Println("error decoding 1")
-			return ""
+			return "", nil
 		}
 		decodedResp, err := base64.StdEncoding.DecodeString(resp)
 
 		fmt.Println(string(decodedResp))
-		return ""
+		return "", nil
 	}
 
 	var resp handlers.EncryptedResponse
 	err = json.Unmarshal(respJson, &resp)
 	if err != nil {
 		fmt.Println("error unmarshaloing")
-		return ""
+		return "", nil
 	}
 
 	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
 	if err != nil {
 		fmt.Println("error decoding 2")
-		return ""
+		return "", nil
 	}
 
 	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
 	if err != nil {
 		fmt.Println("error decoding b64")
-		return ""
+		return "", nil
 	}
 
 	var key AuthResponse
 	err = json.Unmarshal(decodedResp, &key)
 	if err != nil {
 		fmt.Println("error unmarshaloing")
-		return ""
+		return "", nil
 	}
 
-	return key.Token
+	return key.Token, nil
 }
 
-func SendMessage(nodeList *list.List, data SendMessageStruct) {
+func SendMessage(nodeList *list.List, data SendMessageStruct) error {
 	req, err := CreateRequestThroughNetwork(nodeList, data, "messages/send")
 
 	if err != nil {
 		fmt.Println("Cant create request")
-		return
+		return err
 	}
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
@@ -176,42 +176,42 @@ func SendMessage(nodeList *list.List, data SendMessageStruct) {
 		resp, err := DecodeErrorFromNetwork(err.Error(), nodeList)
 		if err != nil {
 			fmt.Println("error decoding 1")
-			return
+			return err
 		}
 		decodedResp, err := base64.StdEncoding.DecodeString(resp)
 
 		fmt.Println(string(decodedResp))
-		return
+		return err
 	}
 
 	var resp handlers.EncryptedResponse
 	err = json.Unmarshal(respJson, &resp)
 	if err != nil {
 		fmt.Println("error unmarshaloing")
-		return
+		return err
 	}
 
 	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
 	if err != nil {
 		fmt.Println("error decoding 2")
-		return
+		return err
 	}
 
-	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
+	_, err = base64.StdEncoding.DecodeString(responseString)
 	if err != nil {
 		fmt.Println("error decoding b64")
-		return
+		return err
 	}
 
-	fmt.Println(string(decodedResp))
+	return nil
 }
 
-func ReceiveMessages(nodeList *list.List, data GetMessagees) {
+func ReceiveMessages(nodeList *list.List, data GetMessagees) ([]MessageResponse, error) {
 	req, err := CreateRequestThroughNetwork(nodeList, data, "messages/fetch")
 
 	if err != nil {
 		fmt.Println("Cant create request")
-		return
+		return nil, err
 	}
 
 	respJson, err := SendHttpRequest(nodeList.Front().Value.(NodeInfo).Addr, req, "redirect")
@@ -219,50 +219,38 @@ func ReceiveMessages(nodeList *list.List, data GetMessagees) {
 		resp, err := DecodeErrorFromNetwork(err.Error(), nodeList)
 		if err != nil {
 			fmt.Println("error decoding 1")
-			return
+			return nil, err
 		}
 		decodedResp, err := base64.StdEncoding.DecodeString(resp)
 
 		fmt.Println(string(decodedResp))
-		return
+		return nil, err
 	}
 
 	var resp handlers.EncryptedResponse
 	err = json.Unmarshal(respJson, &resp)
 	if err != nil {
 		fmt.Println("error unmarshaloing")
-		return
+		return nil, err
 	}
 
 	responseString, err := DecodeRequestThroughNetwork(nodeList, resp.Data)
 	if err != nil {
 		fmt.Println("error decoding 2")
-		return
+		return nil, err
 	}
 
 	decodedResp, err := base64.StdEncoding.DecodeString(responseString)
 	if err != nil {
 		fmt.Println("error decoding b64")
-		return
+		return nil, err
 	}
 
 	messages, err := parseMessages(string(decodedResp))
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return nil, err
 	}
 
-	// Print out the parsed messages
-	for _, msg := range messages {
-		if msg.Username != nil {
-			fmt.Printf("Username: %s\n", *msg.Username)
-		}
-		if msg.Message != nil {
-			fmt.Printf("Message: %s\n", *msg.Message)
-		}
-		if msg.CreateTime != nil {
-			// Format the time in a more readable way
-			fmt.Printf("Created At: %s\n", msg.CreateTime.Format("2006-01-02 15:04:05"))
-		}
-	}
+	return messages, nil
 }
