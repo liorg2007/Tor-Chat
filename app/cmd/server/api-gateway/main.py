@@ -7,7 +7,7 @@ app = FastAPI()
 AUTH_SERVICE = "http://auth-service:8000"
 MESSAGE_SERVICE = "http://message-service:8000"
 
-services = ['auth', 'message']
+services = ['auth', 'messages']
 auth_paths = ['register', 'login', 'users']
 message_path = ['send', 'fetch']
 
@@ -59,15 +59,15 @@ async def catch_all(request: Request, service:str, path: str):
         token = ""
         try:
             json_data = await request.json()
+            token = json_data["Token"]
         except:
             raise HTTPException(status_code=400, detail="You got to send a json")
         
-        token = json_data.get("Token")
         if not token:
             raise HTTPException(status_code=401, detail="Token is required for authentication")
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{AUTH_SERVICE}/auth/jwt_val", json={"Token": token})
+            response = await client.post(f"{AUTH_SERVICE}/auth/jwt_val", json={"token": token})
 
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.json().get("detail"))
@@ -76,7 +76,7 @@ async def catch_all(request: Request, service:str, path: str):
     # Now Call the right handler
     if service == 'auth':
         return await handle_auth(request, path)
-    elif service == 'message':
+    elif service == 'messages':
         return await handle_messages(request, path)
 
     raise HTTPException(status_code=405, detail="Method not allowed")
@@ -88,7 +88,7 @@ async def handle_messages(request: Request, path: str):
         raise HTTPException(status_code=404, detail="Service doesn't exist")
 
     try:
-        return await send_to_service(MESSAGE_SERVICE + "/message/" + path, request)
+        return await send_to_service(MESSAGE_SERVICE + "/messages/" + path, request)
     except HTTPException as e:
         raise e
     except Exception as e:

@@ -22,7 +22,7 @@ async def store_message(username, message):
         print(str(e))
         raise HTTPException(status_code=400, detail="Can't send message")
 
-@app.post("/message/fetch")
+@app.post("/messages/fetch")
 async def fetch_messages(request: Request):
     try:
         messages = list(collection.find({}, {"_id": 0}))
@@ -30,7 +30,7 @@ async def fetch_messages(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching messages: {str(e)}")
 
-@app.post("/message/send")
+@app.post("/messages/send")
 async def send_message(request: Request):
     # Extract data from JSON
     json_data = await request.json()

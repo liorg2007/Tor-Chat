@@ -16,7 +16,7 @@ type SendMessage struct {
 }
 
 type GetMessages struct {
-	token string
+	Token string
 }
 
 type GetAesResponse struct {

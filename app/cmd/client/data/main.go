@@ -12,11 +12,24 @@ func main() {
 		return
 	}
 
-	var data AuthUserRequest
-	data.Username = "Hello1"
-	data.Password = "1234567"
+	var auth AuthUserRequest
+	var message SendMessageStruct
+	var user GetMessagees
+	auth.Username = "Hello1"
+	auth.Password = "1234567"
 
-	SendRegister(&circuit.Circuit, data)
+	str := SendLogin(&circuit.Circuit, auth)
+	user.Token = str
+	message.Token = str
+	message.Username = auth.Username
+	message.Message = "Hello world"
+	fmt.Printf("Token: %s", str)
+
+	SendMessage(&circuit.Circuit, message)
+	SendMessage(&circuit.Circuit, message)
+	SendMessage(&circuit.Circuit, message)
+
+	ReceiveMessages(&circuit.Circuit, user)
 
 	//_, err = GetAesFromNetwork(&circuit.Circuit)
 

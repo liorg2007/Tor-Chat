@@ -123,7 +123,7 @@ async def login_account(request: Request):
     jwt_token = await create_jwt(username)
 
     # Return the token
-    return {"status": "success", "token": jwt_token} 
+    return {"status": "success", "Token": jwt_token} 
 
 
 # Show all users in database
