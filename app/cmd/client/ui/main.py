@@ -12,7 +12,7 @@ app.geometry("800x600")
 app.title("Marshmello Hacker App")
 
 # Load logo image
-cute_img = Image.open("img/cute.png").resize((400, 400), Image.ANTIALIAS)
+cute_img = Image.open("img/cute.png").resize((400, 400))
 cute_photo = ImageTk.PhotoImage(cute_img)
 
 # Start with login screen
