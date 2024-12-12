@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import login_screen
+import requests
+
 
 def show_signup_screen(app, cute_photo):
     for widget in app.winfo_children():
@@ -117,7 +119,7 @@ def show_signup_screen(app, cute_photo):
         fg_color="black",
         text_color="green",
         hover_color="darkgreen",
-        command=lambda: signup_action(username_entry, password_entry, confirm_password_entry, data_security_checkbox),
+        command=lambda: signup_action(username_entry, password_entry, confirm_password_entry, data_security_checkbox, app, cute_photo),
     )
     # Right-side logo
     logo_label = ctk.CTkLabel(master=main_frame, image=cute_photo, text="")
@@ -125,7 +127,7 @@ def show_signup_screen(app, cute_photo):
     signup_button.pack(pady=20)
 
 # Signup action
-def signup_action(username_entry, password_entry, confirm_password_entry, checkbox):
+def signup_action(username_entry, password_entry, confirm_password_entry, checkbox, app, cute_photo):
     username = username_entry.get()
     password = password_entry.get()
     confirm_password = confirm_password_entry.get()
@@ -135,3 +137,10 @@ def signup_action(username_entry, password_entry, confirm_password_entry, checkb
         print("Error: Passwords do not match!")
     else:
         print(f"Sign-Up successful! Username: {username}, Data Security: {data_security_enabled}")
+
+    ans = requests.post("http://localhost:1234/register", json={"Username": username, "Password": password})
+    print(f"Attempted login with username: {username} and password: {password}")
+    print(f"Received answer: {ans}")
+
+    if ans.status_code == 201:
+        login_screen.show_login_screen(app, cute_photo)
