@@ -5,12 +5,71 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"unicode"
 )
 
 var (
 	circuit   *MessageSender
 	authToken string
 )
+
+func passwordChecker(password string) string {
+	var (
+		hasUpperCase bool
+		hasLowerCase bool
+		hasDigit     bool
+		hasSpecial   bool
+	)
+
+	for _, char := range password {
+		if unicode.IsUpper(char) {
+			hasUpperCase = true
+		} else if unicode.IsLower(char) {
+			hasLowerCase = true
+		} else if unicode.IsDigit(char) {
+			hasDigit = true
+		} else {
+			hasSpecial = true
+		}
+	}
+
+	if len(password) < 8 {
+		return "Password is too short. It should be at least 8 characters long"
+	} else if !hasUpperCase {
+		return "Password should contain at least one uppercase letter"
+	} else if !hasLowerCase {
+		return "Password should contain at least one lowercase letter"
+	} else if !hasDigit {
+		return "Password should contain at least one digit"
+	} else if !hasSpecial {
+		return "Password should contain at least one special character"
+	}
+
+	return ""
+}
+
+func checkCredentials(req *AuthUserRequest) error {
+	username := req.Username
+	password := req.Password
+
+	if len(username) < 5 || len(username) > 15 {
+		return fmt.Errorf("{'detail' : 'Username must be 5-15 characters long'}")
+	}
+
+	for _, ch := range username {
+		if !(unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '_' || ch == '-') {
+			return fmt.Errorf("{'detail' : 'Username can only have letters, digits, _ and -'}")
+		}
+	}
+
+	errorMsg := passwordChecker(password)
+
+	if errorMsg != "" {
+		return fmt.Errorf("{'detail' : '%s", errorMsg)
+	}
+
+	return nil
+}
 
 func main() {
 	circuitObj, err := CreateCircuit("http://localhost:8081/", "node2:8080", "node3:8080", "192.168.187.205:8080")
@@ -41,6 +100,13 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = checkCredentials(&req)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotAcceptable)
 		return
 	}
 
