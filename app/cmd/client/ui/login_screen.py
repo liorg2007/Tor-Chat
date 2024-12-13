@@ -1,8 +1,9 @@
 import customtkinter as ctk
-import requests
+import requests, json
 from PIL import Image, ImageTk
 from signup_screen import show_signup_screen  # Import signup screen function
 from chat import open_chat_screen
+from mbox import show_message_box
 
 def show_login_screen(app, cute_photo):
     for widget in app.winfo_children():
@@ -99,13 +100,20 @@ def show_login_screen(app, cute_photo):
     logo_label = ctk.CTkLabel(master=main_frame, image=cute_photo, text="")
     logo_label.place(relx=0.7, rely=0.5, anchor="center")
 
-# Login action
 def login_action(username_entry, password_entry, app):
     username = username_entry.get()
     password = password_entry.get()
     ans = requests.post("http://localhost:1234/login", json={"Username": username, "Password": password})
     print(f"Attempted login with username: {username} and password: {password}")
-    print(f"Received answer: {ans}")
+    #print(f"Received answer: {ans.}")
+    try:
+        if ans.status_code == 200:
+            open_chat_screen(app, username)
+            show_message_box(app, "Success", "You logged in!")
+        else:
+            json_data = json.loads(ans.content.decode())
+            show_message_box(app, "Login Failed", f"{json_data['detail']['detail']}")
+    except Exception as e:
+        show_message_box(app, "Connection Error", f"Error: {e}")
 
-    if ans.status_code == 200:
-        open_chat_screen(app, username)
+

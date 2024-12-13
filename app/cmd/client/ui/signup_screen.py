@@ -1,5 +1,8 @@
 import customtkinter as ctk
 import login_screen
+import requests, json
+from mbox import show_message_box
+
 
 def show_signup_screen(app, cute_photo):
     for widget in app.winfo_children():
@@ -117,7 +120,7 @@ def show_signup_screen(app, cute_photo):
         fg_color="black",
         text_color="green",
         hover_color="darkgreen",
-        command=lambda: signup_action(username_entry, password_entry, confirm_password_entry, data_security_checkbox),
+        command=lambda: signup_action(username_entry, password_entry, confirm_password_entry, data_security_checkbox, app, cute_photo),
     )
     # Right-side logo
     logo_label = ctk.CTkLabel(master=main_frame, image=cute_photo, text="")
@@ -125,13 +128,29 @@ def show_signup_screen(app, cute_photo):
     signup_button.pack(pady=20)
 
 # Signup action
-def signup_action(username_entry, password_entry, confirm_password_entry, checkbox):
+def signup_action(username_entry, password_entry, confirm_password_entry, checkbox, app, cute_photo):
     username = username_entry.get()
     password = password_entry.get()
     confirm_password = confirm_password_entry.get()
     data_security_enabled = checkbox.get()
 
     if password != confirm_password:
-        print("Error: Passwords do not match!")
+        show_message_box(app, "Signup error", f"Passwords don't match!")
+        return
+
+    if not data_security_enabled:
+        show_message_box(app, "Alllow data security", f"Alllow data security")
+        return
+
+
+    ans = requests.post("http://localhost:1234/register", json={"Username": username, "Password": password})
+    print(f"Attempted login with username: {username} and password: {password}")
+    print(f"Received answer: {ans.content}")
+
+    if ans.status_code == 201:
+        login_screen.show_login_screen(app, cute_photo)
+        show_message_box(app, "Success", "You can login now!")
     else:
-        print(f"Sign-Up successful! Username: {username}, Data Security: {data_security_enabled}")
+        json_data = json.loads(ans.content.decode())
+        show_message_box(app, "Signup error", f"{json_data['detail']['detail']}")
+
