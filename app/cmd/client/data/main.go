@@ -13,7 +13,7 @@ var (
 )
 
 func main() {
-	circuitObj, err := CreateCircuit("http://localhost:8081/", "node2:8080", "node3:8080", "10.10.246.33:8080")
+	circuitObj, err := CreateCircuit("http://localhost:8081/", "node2:8080", "node3:8080", "192.168.187.205:8080")
 	if err != nil {
 		log.Fatal("Cant connect")
 	}
@@ -46,7 +46,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = SendRegister(&circuit.Circuit, req)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Registration failed: %v", err), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -69,7 +69,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := SendLogin(&circuit.Circuit, req)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Login failed: %v", err), http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -104,7 +104,7 @@ func sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = SendMessage(&circuit.Circuit, req)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to send message: %v", err), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -126,7 +126,7 @@ func receiveMessagesHandler(w http.ResponseWriter, r *http.Request) {
 
 	messages, err := ReceiveMessages(&circuit.Circuit, GetMessagees{Token: authToken})
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to receive messages: %v", err), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

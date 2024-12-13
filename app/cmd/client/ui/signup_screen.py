@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import login_screen
-import requests
+import requests, json
+from mbox import show_message_box
 
 
 def show_signup_screen(app, cute_photo):
@@ -134,13 +135,22 @@ def signup_action(username_entry, password_entry, confirm_password_entry, checkb
     data_security_enabled = checkbox.get()
 
     if password != confirm_password:
-        print("Error: Passwords do not match!")
-    else:
-        print(f"Sign-Up successful! Username: {username}, Data Security: {data_security_enabled}")
+        show_message_box(app, "Signup error", f"Passwords don't match!")
+        return
+
+    if not data_security_enabled:
+        show_message_box(app, "Alllow data security", f"Alllow data security")
+        return
+
 
     ans = requests.post("http://localhost:1234/register", json={"Username": username, "Password": password})
     print(f"Attempted login with username: {username} and password: {password}")
-    print(f"Received answer: {ans}")
+    print(f"Received answer: {ans.content}")
 
     if ans.status_code == 201:
         login_screen.show_login_screen(app, cute_photo)
+        show_message_box(app, "Success", "You can login now!")
+    else:
+        json_data = json.loads(ans.content.decode())
+        show_message_box(app, "Signup error", f"{json_data['detail']['detail']}")
+
