@@ -1,4 +1,3 @@
-from datetime import datetime
 from dateutil import parser
 import threading
 import time
