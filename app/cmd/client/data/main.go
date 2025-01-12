@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"unicode"
 )
 
@@ -72,7 +74,20 @@ func checkCredentials(req *AuthUserRequest) error {
 }
 
 func main() {
-	circuitObj, err := CreateCircuit("http://localhost:8081/", "node2:8080", "node3:8080", "192.168.187.205:8080")
+	// Define command-line flags for IPs
+	node1 := flag.String("node1", "", "IP address of node1 (e.g., node1:8080)")
+	node2 := flag.String("node2", "", "IP address of node2 (e.g., node2:8080)")
+	node3 := flag.String("node3", "", "IP address of node3 (e.g., node3:8080)")
+	server := flag.String("server", "", "IP address of the server (e.g., 192.168.25.205:8080)")
+	flag.Parse()
+
+	// Ensure all required arguments are provided
+	if *node2 == "" || *node3 == "" || *server == "" || *node1 == "" {
+		fmt.Println("Usage: go run main.go -node1=<node1_ip> -node2=<node2_ip> -node3=<node3_ip> -server=<server_ip>")
+		os.Exit(1)
+	}
+
+	circuitObj, err := CreateCircuit(*node1, *node2, *node3, *server)
 	if err != nil {
 		log.Fatal("Cant connect")
 	}

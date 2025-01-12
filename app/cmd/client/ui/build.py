@@ -6,7 +6,7 @@ project_name = "my_customtkinter_app"  # Name of the executable
 entry_file = "main.py"  # Entry point of the application
 output_dir = "dist"  # Directory for the built executable
 icon_path = "img/icon.ico"  # Path to app icon (optional)
-customtkinter_path = os.path.join(os.path.dirname(__file__), "uivenv", "Lib", "site-packages", "customtkinter")  # Adjust if needed
+customtkinter_path = os.path.join(os.path.dirname(__file__), "venv", "Lib", "site-packages", "customtkinter")  # Adjust if needed
 
 # PyInstaller build command
 PyInstaller.__main__.run([

@@ -152,5 +152,5 @@ def signup_action(username_entry, password_entry, confirm_password_entry, checkb
         show_message_box(app, "Success", "You can login now!")
     else:
         json_data = json.loads(ans.content.decode())
-        show_message_box(app, "Signup error", f"{json_data['detail']['detail']}")
+        show_message_box(app, "Signup error", f'{json_data["detail"]["detail"]}')
 
