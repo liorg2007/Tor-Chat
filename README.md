@@ -8,7 +8,9 @@ What the TOR implementation does is:
 The result is a method of sending messages which has multiple layers of encryption, and the networking nature insures that the different layers only know who send and to who redirect(eg. with 3 layers the server doesnt know the origin IP of the sender)
 
 ## How to run
-For testing the project I recommend running everything locally using the Docker scritps provided.
+For node and server running there are docker-compose.yml files.
+
+For client there is a guide in the client directory.
 
 ## What the project consists of
 
