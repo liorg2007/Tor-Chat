@@ -19,7 +19,7 @@ type NodeInfo struct {
 }
 
 func CreateInitialConnection(addr string, redirectionAddr string) (NodeInfo, error) {
-	key, ses, err := GetInitAesKey("localhost:8081")
+	key, ses, err := GetInitAesKey(addr)
 
 	if err != nil {
 		fmt.Printf("Error: %s", err)
@@ -31,7 +31,7 @@ func CreateInitialConnection(addr string, redirectionAddr string) (NodeInfo, err
 	enc := encryption.AESEncryptor{Key: key}
 
 	nodeOne := NodeInfo{
-		Addr:         "localhost:8081",
+		Addr:         addr,
 		AesEncryptor: enc,
 		Session:      ses,
 	}
