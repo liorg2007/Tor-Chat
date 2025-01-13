@@ -7,21 +7,15 @@ def validate_ip(ip_string):
     return True
 
 def cleanup_process():
-    """Kill all processes named 'sender.exe'"""
     for proc in psutil.process_iter(['pid', 'name']):
         try:
-            # Check if process name contains 'sender.exe'
             if 'sender.exe' in proc.info['name'].lower():
+                print(f"Terminating: {proc.info}")
                 process = psutil.Process(proc.info['pid'])
-                process.terminate()  # Try graceful termination first
-                
-                # Wait for the process to terminate
-                try:
-                    process.wait(timeout=3)  # Wait up to 3 seconds
-                except psutil.TimeoutExpired:
-                    process.kill()  # Force kill if graceful termination fails
-                
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                process.terminate()
+                process.wait(timeout=3)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+            print(f"Error terminating process: {e}")
             continue
 
 def show_ip_config_screen(app, cute_photo):
@@ -89,7 +83,7 @@ def show_ip_config_screen(app, cute_photo):
 
         # Construct command arguments
         args = [
-            "./sender.exe",
+            "sender.exe",
             f"-node1={ips['node1']}",
             f"-node2={ips['node2']}",
             f"-node3={ips['node3']}",
@@ -103,6 +97,7 @@ def show_ip_config_screen(app, cute_photo):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+            print(process.pid)
             status_label.configure(
                 text="Sender launched successfully",
                 text_color="green"

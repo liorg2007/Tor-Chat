@@ -1,0 +1,5 @@
+Collecting setuptools
+  Using cached setuptools-75.8.0-py3-none-any.whl.metadata (6.7 kB)
+Using cached setuptools-75.8.0-py3-none-any.whl (1.2 MB)
+Installing collected packages: setuptools
+Successfully installed setuptools-75.8.0

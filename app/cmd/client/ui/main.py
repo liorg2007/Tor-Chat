@@ -1,19 +1,6 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from ip_config_screen import show_ip_config_screen
-import subprocess
-import threading
-
-def launch_communicator():
-    try:
-        subprocess.Popen(["./sender.exe"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except FileNotFoundError:
-        print("Error: 'sender.exe' not found. Please ensure it's in the correct directory.")
-    except Exception as e:
-        print(f"An error occurred while launching 'sender.exe': {e}")
-
-# Launch the communicator in a separate thread
-threading.Thread(target=launch_communicator, daemon=True).start()
 
 # Set up the appearance and theme
 ctk.set_appearance_mode("dark")
