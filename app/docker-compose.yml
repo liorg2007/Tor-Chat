@@ -13,6 +13,7 @@ services:
     environment:
       - REDIS_HOST=redis1
       - REDIS_PORT=6379
+      - OUTBOUND_ENABLED=true
     networks:
       - node1-network
       - shared-network
@@ -37,6 +38,7 @@ services:
     environment:
       - REDIS_HOST=redis2
       - REDIS_PORT=6379
+      - OUTBOUND_ENABLED=true
     networks:
       - node2-network
       - shared-network
